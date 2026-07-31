@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#eaf5fd">
+<title>小马甲的工作台</title>
+<style>
+:root{
+  --bg:#f1f8fd;
+  --card:#ffffff;
+  --line:#e3eff8;
+  --blue-50:#f3f9fe;
+  --blue-100:#e4f2fc;
+  --blue-200:#c9e5f7;
+  --blue-300:#9ed3f1;
+  --blue-400:#6dbcea;
+  --blue-500:#48a4dc;
+  --blue-600:#2f88c6;
+  --mint:#79d5c1;
+  --mint-bg:#e6f8f3;
+  --amber:#f5b955;
+  --amber-bg:#fff4e0;
+  --coral:#f4826e;
+  --coral-bg:#ffeeea;
+  --violet:#a7a6f0;
+  --violet-bg:#eeeefc;
+  --text:#22455f;
+  --text-2:#4a7791;
+  --muted:#7f9bb0;
+  --shadow:0 2px 12px rgba(56,140,196,.09);
+  --shadow-lg:0 8px 26px rgba(56,140,196,.16);
+  --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;
+  overflow-x:hidden;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;padding:0}
+ul{margin:0;padding:0;list-style:none}
+
+/* ============ 开屏 ============ */
+#splash{
+  position:fixed;inset:0;z-index:100;
+  background:linear-gradient(180deg,#0b1c3d 0%,#132c55 42%,#1d4472 72%,#2d5f8e 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .7s ease,visibility .7s;
+}
+#splash.hide{opacity:0;visibility:hidden}
+#sky{position:absolute;inset:0;width:100%;height:100%}
+.splash-inner{position:relative;z-index:3;text-align:center;padding:0 30px;animation:fadeUp 1.1s ease both}
+.sp-date{color:#a9cdf0;font-size:13px;letter-spacing:3px;margin-bottom:14px}
+.sp-week{color:#7fa8d4;font-size:12px;letter-spacing:2px;margin-bottom:26px}
+.sp-hi{font-size:31px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:16px;text-shadow:0 2px 20px rgba(120,190,255,.5)}
+.sp-quote{color:#c6dcf3;font-size:14px;line-height:1.9;max-width:290px;margin:0 auto 40px;min-height:52px}
+.sp-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 34px;border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(214,238,255,.92));
+  color:#1d4472;font-weight:700;font-size:15px;letter-spacing:1px;
+  box-shadow:0 6px 26px rgba(140,200,255,.42);
+  transition:transform .2s;
+}
+.sp-btn:active{transform:scale(.95)}
+.sp-tip{margin-top:22px;color:#5f88b4;font-size:11px;letter-spacing:1px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.mountain{position:absolute;left:0;right:0;bottom:0;z-index:2}
+
+/* ============ 布局 ============ */
+#app{display:flex;min-height:100vh}
+#rail{
+  position:fixed;left:0;top:0;bottom:0;width:62px;z-index:30;
+  background:linear-gradient(180deg,#e9f5fd 0%,#dceffb 100%);
+  border-right:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;
+  padding:10px 0 14px;gap:4px;
+}
+.rail-logo{
+  width:36px;height:36px;border-radius:12px;flex:none;
+  background:linear-gradient(135deg,var(--blue-400),var(--blue-600));
+  color:#fff;font-weight:700;font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(47,136,198,.32);margin-bottom:8px;
+}
+.rail-item{
+  width:54px;padding:8px 0 6px;border-radius:13px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:#6e93ac;transition:.18s;flex:none;
+}
+.rail-item svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rail-item span{font-size:10px;letter-spacing:.5px;line-height:1.1}
+.rail-item.on{background:#fff;color:var(--blue-600);box-shadow:var(--shadow);font-weight:600}
+.rail-item.on svg{stroke-width:2}
+.rail-sp{flex:1}
+.rail-mini{font-size:9px;color:#8fadc4;text-align:center;line-height:1.4}
+.rail-mini b{display:block;font-size:14px;color:var(--blue-600)}
+
+main{margin-left:62px;flex:1;min-width:0;padding:12px 12px 44px;max-width:660px}
+
+/* ============ 通用组件 ============ */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 2px 12px}
+.page-head h1{margin:0;font-size:21px;letter-spacing:.5px}
+.page-head .sub{font-size:11px;color:var(--muted);margin-top:3px}
+.pill{padding:5px 11px;border-radius:20px;background:var(--blue-100);color:var(--blue-600);font-size:11px;font-weight:600}
+
+.card{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);margin-bottom:12px;border:1px solid rgba(227,239,248,.9)}
+.card-t{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.card-t h3{margin:0;font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+.card-t h3::before{content:"";width:3px;height:14px;border-radius:2px;background:linear-gradient(180deg,var(--blue-400),var(--blue-600))}
+.card-t .act{font-size:11.5px;color:var(--blue-500);font-weight:600}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+
+.stat{border-radius:13px;padding:11px 10px;text-align:center;background:var(--blue-50);border:1px solid var(--line)}
+.stat .n{font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.5px}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:3px}
+.stat.b{background:var(--blue-100);border-color:#cfe7f8}.stat.b .n{color:var(--blue-600)}
+.stat.m{background:var(--mint-bg);border-color:#d3f0e8}.stat.m .n{color:#35a58c}
+.stat.a{background:var(--amber-bg);border-color:#f8e6c6}.stat.a .n{color:#d99424}
+.stat.c{background:var(--coral-bg);border-color:#fbd9d2}.stat.c .n{color:#e15f45}
+.stat.v{background:var(--violet-bg);border-color:#dededf}.stat.v .n{color:#7a78d8}
+/* 自动关联的数字：可点击溯源 */
+.stat.lk{cursor:pointer;position:relative}
+.stat.lk:active{transform:scale(.96)}
+.stat.lk .l{display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap}
+.stat .src{font-style:normal;font-size:9px;padding:1px 4px;border-radius:5px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);color:#7f9bb0;line-height:1.4}
+.stat.lk::after{content:'›';position:absolute;top:5px;right:7px;font-size:12px;color:#9dbdd4;line-height:1}
+.lnk-note{margin-top:7px;padding-top:7px;border-top:1px dashed var(--line);font-size:10px;line-height:1.7;color:var(--muted);display:flex;flex-wrap:wrap;gap:0 5px}
+.lnk-note b{color:var(--blue-600);font-weight:800}
+.lnk-note .warn{color:#df5a3f}
+.flash{animation:flashCard 1.1s ease}
+@keyframes flashCard{0%,100%{box-shadow:0 2px 10px rgba(72,164,220,.08)}35%{box-shadow:0 0 0 3px rgba(72,164,220,.35)}}
+
+.bar{height:8px;border-radius:6px;background:var(--blue-100);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue-300),var(--blue-500));transition:width .5s}
+.bar.mint>i{background:linear-gradient(90deg,#9ce0d0,var(--mint))}
+.bar.amber>i{background:linear-gradient(90deg,#ffd79a,var(--amber))}
+
+.chk{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px dashed var(--line)}
+.chk:last-child{border-bottom:0}
+.box{
+  width:21px;height:21px;border-radius:7px;border:1.8px solid var(--blue-200);flex:none;
+  display:flex;align-items:center;justify-content:center;transition:.18s;background:#fff;
+}
+.box svg{width:12px;height:12px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.chk.done .box{background:var(--blue-500);border-color:var(--blue-500)}
+.chk.done .box svg{opacity:1}
+.chk .tx{flex:1;min-width:0}
+.chk .tx b{display:block;font-weight:600;font-size:13.5px}
+.chk .tx small{color:var(--muted);font-size:11px}
+.chk.done .tx b{color:var(--muted);text-decoration:line-through}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10.5px;font-weight:600}
+.tag.b{background:var(--blue-100);color:var(--blue-600)}
+.tag.m{background:var(--mint-bg);color:#33a084}
+.tag.a{background:var(--amber-bg);color:#cf8d1d}
+.tag.c{background:var(--coral-bg);color:#df5a3f}
+.tag.v{background:var(--violet-bg);color:#7472d4}
+.tag.g{background:#eef3f7;color:#7f9bb0}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:6px 12px;border-radius:20px;background:var(--blue-50);border:1px solid var(--line);font-size:12px;color:#54798f;transition:.16s}
+.chip.on{background:linear-gradient(135deg,var(--blue-400),var(--blue-600));color:#fff;border-color:transparent;font-weight:600;box-shadow:0 3px 10px rgba(47,136,198,.3)}
+.bed{padding:5px 9px;border-radius:9px;background:var(--blue-50);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--blue-600);display:inline-flex;align-items:center;gap:5px}
+.bed i{font-style:normal;color:#b8ccdb;font-size:13px}
+.bed.ok{background:var(--mint-bg);border-color:#c7ebe1;color:#2f9a80}
+.bed.ing{background:var(--amber-bg);border-color:#f6e0bb;color:#c8871c}
+/* 床号清单：每床一行，显示对应治疗项目与频次 */
+.bedlist{display:flex;flex-direction:column;gap:7px}
+.bedrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:11px;background:var(--blue-50);border:1px solid var(--line)}
+.bedrow.ok{background:var(--mint-bg);border-color:#c7ebe1}
+.bedrow.ing{background:var(--amber-bg);border-color:#f6e0bb}
+.bedrow.miss{background:var(--coral-bg);border-color:#f4b3a7}
+.bedrow.miss .bl>b{color:#df5a3f}
+.miss-txt{font-size:11px;color:#df5a3f;font-weight:700}
+.bedrow .bl{flex:1;min-width:0;cursor:pointer}
+.bedrow .bl>b{font-size:13px;color:var(--blue-700);font-weight:700}
+.bedrow .bl .edit-hint{font-style:normal;margin-left:5px;font-size:11px;color:var(--blue-400);opacity:.65}
+.bedrow .bl.open .edit-hint{opacity:1;color:var(--blue-600)}
+.bedrow.ok .bl>b{color:#2f9a80}
+.bedrow.ing .bl>b{color:#c8871c}
+.bedrow .rx{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.rx-tag{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:7px;border:1px solid}
+.bedrow .muted{font-size:11px;color:var(--muted)}
+.bedrow .del{font-style:normal;color:#b8ccdb;font-size:15px;flex:none}
+.bedblock{border-radius:13px;margin-bottom:7px}
+.bedrow.open{box-shadow:0 0 0 2px var(--blue-200)}
+.bedrow .bl{position:relative}
+.plan-pill{font-style:normal;margin-left:6px;font-size:10px;font-weight:700;color:var(--blue-600);background:#fff;border:1px solid var(--blue-200);border-radius:7px;padding:0 6px;vertical-align:middle}
+.bedrow .edit{font-style:normal;font-size:11px;font-weight:700;color:var(--blue-600);background:#fff;border:1px solid var(--blue-200);border-radius:8px;padding:3px 8px;flex:none;cursor:pointer}
+.bedrow .edit:active{background:var(--blue-50)}
+.bedrow .out{font-style:normal;font-size:11px;font-weight:700;color:#df5a3f;background:#fff;border:1px solid #f4b3a7;border-radius:8px;padding:3px 8px;flex:none;cursor:pointer}
+.bedrow .out:active{background:var(--coral-bg)}
+.plan-ed{background:var(--blue-50);border:1px solid var(--blue-200);border-top:0;border-radius:0 0 12px 12px;padding:10px;margin-top:-4px}
+.plan-ed-h{font-size:11.5px;font-weight:700;color:var(--blue-700);margin-bottom:7px}
+.plan-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.plan-row .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.plan-nm{flex:1;min-width:0;font-size:12.5px;font-weight:600}
+.freq-ctl{display:flex;align-items:center;gap:6px;flex:none}
+.freq-ctl .stp{width:24px;height:24px;border-radius:7px;border:1px solid var(--blue-200);background:#fff;color:var(--blue-600);font-size:15px;line-height:1;font-weight:700}
+.freq-ctl .stp:active{background:var(--blue-100)}
+.freq-n{font-size:11.5px;font-weight:700;color:var(--blue-700);min-width:54px;text-align:center}
+.freq-ctl .del.sm{font-size:13px;padding:0 2px}
+
+.inp{width:100%;padding:9px 11px;border-radius:11px;border:1px solid var(--line);background:var(--blue-50);outline:none;font-size:13px}
+.inp:focus{border-color:var(--blue-300);background:#fff}
+.addrow{display:flex;gap:7px;margin-top:9px}
+.addrow .inp{flex:1}
+.btn{padding:9px 15px;border-radius:11px;background:var(--blue-500);color:#fff;font-weight:600;font-size:13px;box-shadow:0 3px 10px rgba(47,136,198,.25)}
+.btn:active{transform:scale(.96)}
+.btn.ghost{background:var(--blue-50);color:var(--blue-600);box-shadow:none;border:1px solid var(--line)}
+.btn.sm{padding:6px 12px;font-size:12px;border-radius:9px}
+
+.todo{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.todo:last-child{border-bottom:0}
+.todo .t{flex:1;min-width:0;font-size:13.5px;word-break:break-all}
+.todo.done .t{color:var(--muted);text-decoration:line-through}
+.del{color:#c3d5e2;font-size:17px;line-height:1;padding:0 3px}
+.urgent-item{background:var(--coral-bg);border-radius:11px;padding:9px 10px;margin-bottom:7px;border-left:3px solid var(--coral)}
+.over-item{background:linear-gradient(90deg,#fff1ed,#fff8f6);border-radius:11px;padding:10px;margin-bottom:7px;border:1px solid #fbd9d2;position:relative;overflow:hidden}
+.over-item::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--coral);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.empty{text-align:center;color:#a9c1d3;font-size:12px;padding:14px 0}
+
+/* 治疗项目 & 记录 */
+.tp{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:11px;background:var(--blue-50);border:1px solid var(--line)}
+.tp .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.tp b{flex:1;min-width:0;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp .mn{font-size:11px;font-weight:700;color:var(--blue-600);background:#fff;border:1px solid var(--blue-200);border-radius:8px;padding:2px 6px;flex:none}
+.rec{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:12px;background:var(--blue-50);border:1px solid var(--line);margin-bottom:7px}
+.rec.ing{background:linear-gradient(90deg,#fff6e8,#fffdf9);border-color:#f8e6c6}
+.rec.ing .dot{animation:pulse 1.4s infinite}
+.rec .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.rec .rc{flex:1;min-width:0}
+.rec .rc b{display:block;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec .rc small{font-size:11px;color:var(--muted);display:block;margin-top:1px}
+.rec .rc small u{text-decoration:none;border-bottom:1px dashed #b8ccdb;padding-bottom:1px}
+.tl{display:flex;height:9px;border-radius:6px;overflow:hidden;background:var(--blue-100);margin:2px 0 5px}
+.tl i{display:block;height:100%}
+.tl-ax{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted)}
+.rx-pick{background:var(--blue-50);border:1px solid var(--line);border-radius:12px;padding:9px;margin-bottom:9px}
+.rx-pick.collapsed{padding-bottom:2px}
+.rx-pick-h{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--blue-700);margin-bottom:7px;cursor:pointer;user-select:none}
+.rx-pick-h .chev{font-size:11px;color:var(--blue-500);transition:transform .15s}
+.rx-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 6px}
+.rx-pick.collapsed .rx-grid{display:none}
+.rx-foot{font-size:10px;color:var(--muted);margin-top:7px;padding-top:6px;border-top:1px dashed var(--line)}
+.rx-pick.collapsed .rx-foot{display:none}
+.rx-opt{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--blue-700);cursor:pointer;user-select:none}
+.rx-opt:active{background:var(--blue-100)}
+.rx-opt.on{background:#e3f1fb}
+.rx-opt input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue-600);flex:none}
+.rx-opt .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.rx-opt .rx-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rx-opt i{font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted);flex:none}
+
+.mus-badge{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex:none}
+
+.meal{border-radius:13px;overflow:hidden;background:var(--blue-50);border:1px solid var(--line);position:relative}
+.meal img{width:100%;height:96px;object-fit:cover;display:block}
+.meal .mi{padding:7px 8px}
+.meal .mi b{font-size:12px;display:block}
+.meal .mi small{font-size:10.5px;color:var(--muted)}
+.meal .x{position:absolute;right:5px;top:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.42);color:#fff;font-size:13px;line-height:22px;text-align:center}
+.addmeal{border:1.6px dashed var(--blue-200);border-radius:13px;height:100%;min-height:135px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--blue-400);background:var(--blue-50)}
+.addmeal svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6}
+.addmeal span{font-size:11.5px}
+
+.ring-wrap{display:flex;align-items:center;gap:14px}
+.ring{position:relative;width:96px;height:96px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .c b{font-size:20px;font-weight:800;line-height:1}
+.ring .c small{font-size:10px;color:var(--muted);margin-top:2px}
+
+.kv{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:12.5px}
+.kv span{color:var(--muted)}
+.kv b{font-weight:700}
+
+.sub-tabs{display:flex;gap:6px;background:#e9f3fb;padding:4px;border-radius:13px;margin-bottom:12px}
+.sub-tabs button{flex:1;padding:8px 0;border-radius:10px;font-size:12.5px;color:#6b90a8;font-weight:600;transition:.16s}
+.sub-tabs button.on{background:#fff;color:var(--blue-600);box-shadow:0 2px 7px rgba(56,140,196,.13)}
+
+.step{display:flex;align-items:center;gap:8px}
+.step button{width:26px;height:26px;border-radius:9px;background:var(--blue-100);color:var(--blue-600);font-weight:700;font-size:15px;line-height:1}
+.step b{min-width:44px;text-align:center;font-size:16px}
+
+.skill-card{border-radius:var(--r);padding:13px;margin-bottom:11px;box-shadow:var(--shadow);border:1px solid rgba(227,239,248,.9)}
+.sc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sc-head .ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;flex:none}
+.sc-head .tt{flex:1;min-width:0}
+.sc-head .tt b{display:block;font-size:14px}
+.sc-head .tt small{font-size:10.5px;color:var(--muted)}
+.mini-list li{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px;align-items:flex-start}
+.mini-list li:last-child{border-bottom:0}
+.mini-list .w{font-weight:700;color:var(--blue-600);flex:none}
+.mini-list .m{flex:1;color:#5d7f95;min-width:0;word-break:break-all}
+
+#toast{
+  position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);
+  background:rgba(34,69,95,.94);color:#fff;padding:10px 20px;border-radius:22px;font-size:13px;
+  opacity:0;pointer-events:none;transition:.28s;z-index:80;box-shadow:var(--shadow-lg);white-space:nowrap;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ===== 应用内确认 / 输入弹窗 ===== */
+.modal-ov{position:fixed;inset:0;background:rgba(11,28,46,.45);display:none;align-items:center;justify-content:center;z-index:90;padding:24px}
+.modal-ov.show{display:flex;animation:fade .2s ease}
+.modal-card{width:100%;max-width:320px;background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden}
+.modal-title{padding:18px 18px 0;font-size:15px;font-weight:700;color:var(--ink)}
+.modal-body{padding:10px 18px 4px;font-size:13px;color:var(--muted);line-height:1.6;white-space:pre-line}
+.modal-input{width:100%;margin-top:10px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink);box-sizing:border-box}
+.modal-input:focus{outline:none;border-color:var(--blue-400)}
+textarea.modal-input{resize:vertical;min-height:62px}
+.modal-foot{display:flex;gap:10px;padding:16px 18px 18px}
+.modal-ta{width:100%;height:200px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;line-height:1.5;padding:8px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box;color:var(--ink);background:#fbfdff}
+.modal-link{display:inline-flex;align-items:center;justify-content:center;flex:1;padding:8px 14px;border-radius:11px;background:var(--blue-600);color:#fff;font-size:13px;font-weight:700;text-decoration:none}
+.modal-btn{flex:1;padding:10px 0;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer}
+.modal-btn.cancel{background:var(--blue-50);color:var(--blue-700)}
+.modal-btn.ok{background:var(--blue-600);color:#fff}
+.modal-btn.ok:active{background:var(--blue-700)}
+
+/* ===== 经验 / 心得 ===== */
+.add-btn{margin-left:8px;flex:none;padding:7px 14px;border:none;border-radius:11px;background:var(--blue-600);color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.add-btn:active{background:var(--blue-700)}
+.note-card .note-date{font-size:12px;font-weight:700;color:var(--blue-500)}
+.note-acts{display:flex;gap:12px}
+.act.warn{color:var(--coral)}
+.note-title{font-size:15px;font-weight:800;color:var(--ink);margin:2px 0 6px;line-height:1.4}
+.note-summary{font-size:13px;color:var(--blue-700);font-weight:600;margin-bottom:6px;line-height:1.5}
+.note-content{font-size:13px;color:var(--muted);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+
+/* ===== 经验 / 心得 编辑器 ===== */
+.editor-ov{position:fixed;inset:0;background:rgba(11,28,46,.45);display:none;align-items:center;justify-content:center;z-index:92;padding:20px;overflow:auto}
+.editor-ov.show{display:flex;animation:fade .2s ease}
+.editor-card{width:100%;max-width:420px;background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);padding:18px;box-sizing:border-box}
+.editor-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:14px}
+.ef{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.ef>span{font-size:11px;font-weight:700;color:var(--muted)}
+.editor-foot{display:flex;gap:10px;margin-top:4px}
+
+/* ================= 学习分区 ================= */
+.study-bar{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.study-nav{width:38px;height:38px;flex:none;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--blue-600);font-size:20px;line-height:1;cursor:pointer}
+.study-nav:active{background:var(--blue-50)}
+.study-date{flex:1;text-align:center;font-size:15px;font-weight:700;color:var(--ink)}
+.study-today{margin-left:auto;padding:6px 12px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--blue-600);font-size:12px;cursor:pointer}
+.study-card{margin-bottom:12px}
+.study-tag{display:inline-block;padding:3px 9px;border-radius:8px;font-size:12px;font-weight:700;color:#fff}
+.study-tag.sh{background:#e8794f}
+.study-tag.me{background:#3aa6a0}
+.study-tag.fo{background:#6a7bd6}
+.study-no{font-size:16px;font-weight:800;color:var(--ink);margin:8px 0 4px}
+.study-comp{font-size:13px;color:var(--ink);margin:6px 0 2px}
+.study-body{font-size:14px;line-height:1.75;color:var(--ink);margin-top:4px;letter-spacing:.2px}
+.study-foot{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;padding:0 6px}
+
+/* ================= 本地数据备份 ================= */
+.backup-card{margin-top:12px}
+.backup-row{display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap}
+.backup-info{font-size:13px;line-height:1.6;flex:1;min-width:180px}
+.backup-btn{flex:none;padding:8px 14px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--blue-600);font-size:13px;font-weight:700;cursor:pointer}
+.backup-btn:active{background:var(--blue-50)}
+.backup-tip{font-size:11.5px;margin-top:8px;line-height:1.5}
+
+.spark{width:100%;height:56px;display:block}
+.fade{animation:fade .32s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(min-width:680px){main{margin:0 auto;padding-left:12px;padding-right:12px}#app{justify-content:center}}
+
+/* ================= 信息分区 ================= */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin:4px 0 12px}
+.info-grid .f{display:flex;flex-direction:column;gap:3px}
+.info-grid .f label{font-size:10.5px;color:var(--muted);font-weight:700}
+.info-grid .ro{font-size:13px;font-weight:700;color:var(--blue-700);padding:7px 0}
+.bedno{background:var(--blue-50)!important;border-color:var(--blue-200)!important}
+.inp.sm{padding:6px 8px;font-size:12px}
+.tpill{display:inline-block;margin:0 6px 6px 0;padding:2px 8px;border-radius:7px;font-weight:700;font-size:11px;border:1px solid}
+.plan-sec{margin-top:11px;padding-top:10px;border-top:1px dashed var(--line)}
+.plan-sec-h{font-size:11px;font-weight:700;color:var(--blue-700);margin-bottom:7px}
+.plan-sec-h .sub-h{font-weight:400;color:var(--muted)}
+.plan-sec-h .mini{margin-left:auto;float:right}
+.mini{font-size:10.5px;font-weight:700;color:var(--blue-700);background:var(--blue-50);border:1px solid var(--line);border-radius:8px;padding:3px 9px;cursor:pointer}
+.mini:active{background:var(--blue-100)}
+.ck-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:2px}
+table.ckt{border-collapse:collapse;font-size:11px;min-width:430px;width:100%}
+table.ckt th,table.ckt td{border:1px solid var(--line);padding:5px 3px;text-align:center;vertical-align:middle}
+table.ckt th{background:var(--blue-50);color:var(--blue-700);font-weight:700}
+table.ckt th.lk,table.ckt td.lk{text-align:left;white-space:nowrap;background:#fafdff;position:sticky;left:0;z-index:1}
+table.ckt td.lk small{color:var(--muted);font-weight:400}
+table.ckt th.td,table.ckt td.td{background:#eaf3fb}
+table.ckt th small{font-size:9px;color:var(--muted);font-weight:400}
+table.ckt th .dh{font-size:11px;font-weight:800}
+.ckcell{width:24px;height:24px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--blue-700);font-size:12px;font-weight:800;cursor:pointer;padding:0;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.ckcell.on{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+.ckcell.on.auto{background:#2f9e6b;border-color:#2f9e6b}
+.cknote{display:inline-flex;margin-left:3px;font-size:11px;color:var(--muted);cursor:pointer;vertical-align:middle}
+.cktime{display:block;font-size:9px;line-height:1.1;color:#2f9e6b;margin-top:2px;white-space:nowrap}
+.cknote:active{color:var(--blue-700)}
+.ck-legend{font-size:10px;color:var(--muted);margin:5px 0 2px}
+.ck-rmk{margin-top:8px;background:var(--blue-50);border:1px solid var(--line);border-radius:11px;padding:9px}
+.ck-rmk-h{font-size:11px;font-weight:700;color:var(--blue-700);margin-bottom:6px}
+.ck-rmk-row{display:flex;gap:7px}
+.ck-rmk-row .inp{flex:1}
+</style>
+</head>
+<body>
+
+<!-- ================= 开屏 ================= -->
+<div id="splash">
+  <canvas id="sky"></canvas>
+  <svg class="mountain" viewBox="0 0 400 110" preserveAspectRatio="none" height="110">
+    <path d="M0 74 L52 44 L96 68 L140 32 L196 72 L240 52 L300 80 L344 58 L400 84 L400 110 L0 110 Z" fill="#0d1f3f" opacity=".85"/>
+    <path d="M0 92 L60 70 L118 88 L178 64 L236 90 L300 72 L360 92 L400 78 L400 110 L0 110 Z" fill="#081627"/>
+  </svg>
+  <div class="splash-inner">
+    <div class="sp-date" id="spDate"></div>
+    <div class="sp-week" id="spWeek"></div>
+    <div class="sp-hi">嗨，小马甲</div>
+    <div class="sp-quote" id="spQuote"></div>
+    <button class="sp-btn" id="spBtn">
+      进入工作台
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+    </button>
+    <div class="sp-tip" id="spTip"></div>
+  </div>
+</div>
+
+<!-- ================= 主体 ================= -->
+<div id="app">
+  <nav id="rail">
+    <div class="rail-logo">马</div>
+    <button class="rail-item on" data-nav="home">
+      <svg viewBox="0 0 24 24"><path d="M3 10.4 12 3.2l9 7.2"/><path d="M5.6 9.4V20.8h12.8V9.4"/><path d="M10 20.8v-5.4h4v5.4"/></svg>
+      <span>首页</span>
+    </button>
+    <button class="rail-item" data-nav="work">
+      <svg viewBox="0 0 24 24"><rect x="5" y="4.2" width="14" height="16.6" rx="2.4"/><path d="M9.2 4.2h5.6v2.9H9.2z"/><path d="M8.6 11.4h6.8M8.6 15.2h4.6"/></svg>
+      <span>工作</span>
+    </button>
+    <button class="rail-item" data-nav="info">
+      <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2.4"/><circle cx="9" cy="10.4" r="2.2"/><path d="M6.4 16c.7-1.9 2.1-2.8 2.6-2.8s1.9.9 2.6 2.8"/><path d="M14.6 9.6h4M14.6 13h4M14.6 16h3"/></svg>
+      <span>信息</span>
+    </button>
+    <button class="rail-item" data-nav="discharge">
+      <svg viewBox="0 0 24 24"><path d="M14 4h4v16h-4"/><path d="M4 12h10"/><path d="M12 8l4 4-4 4"/></svg>
+      <span>出院</span>
+    </button>
+    <button class="rail-item" data-nav="notes">
+      <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 15h6M9 18h4"/></svg>
+      <span>经验</span>
+    </button>
+    <button class="rail-item" data-nav="study">
+      <svg viewBox="0 0 24 24"><path d="M12 3 2 7.5 12 12l10-4.5z"/><path d="M6 10v5c0 1.3 2.7 2.5 6 2.5s6-1.2 6-2.5v-5"/><path d="M6 14.5V17c0 1.3 2.7 2.5 6 2.5s6-1.2 6-2.5v-2.5"/></svg>
+      <span>学习</span>
+    </button>
+    <div class="rail-sp"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<div id="toast"></div>
+
+<!-- ================= 应用内确认 / 输入弹窗（替代原生 confirm/prompt，兼容沙箱预览） ================= -->
+<div id="appModal" class="modal-ov">
+  <div class="modal-card">
+    <div class="modal-title"></div>
+    <div class="modal-body"></div>
+    <div class="modal-foot">
+      <button class="modal-btn cancel" data-modal="cancel">取消</button>
+      <button class="modal-btn ok" data-modal="ok">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 本地数据备份：导出弹窗（兼容沙箱预览，避免 a.download 被拦截无反应） ================= -->
+<div id="backupModal" class="modal-ov">
+  <div class="modal-card">
+    <div class="modal-title">导出备份到本机</div>
+    <div class="modal-body">
+      <div style="font-size:12px;margin-bottom:8px">这是你的全部数据（JSON）。可「复制全部」后粘贴到手机/电脑备忘录或文件保存，或点「下载文件」直接存到本机。</div>
+      <textarea id="bkText" class="modal-ta" readonly></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="modal-btn cancel" data-act="bkClose">关闭</button>
+      <button class="modal-btn ok" data-act="bkCopy">复制全部</button>
+      <a id="bkLink" class="modal-link" href="#" download="">下载文件</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 本地数据备份：导入文件（隐藏） ================= -->
+<input id="impFile" type="file" accept="application/json,.json" style="display:none">
+
+<!-- ================= 经验 / 心得 编辑器 ================= -->
+<div id="noteEditor" class="editor-ov">
+  <div class="editor-card">
+    <div class="editor-title">添加经验 / 心得</div>
+    <label class="ef"><span>日期</span><input id="noteDate" class="inp" type="date"></label>
+    <label class="ef"><span>标题</span><input id="noteTitle" class="inp" type="text" placeholder="一句话标题（可选）"></label>
+    <label class="ef"><span>摘要</span><textarea id="noteSummary" class="inp" rows="2" placeholder="要点摘要（可选）"></textarea></label>
+    <label class="ef"><span>内容</span><textarea id="noteContent" class="inp" rows="6" placeholder="详细内容与心得……"></textarea></label>
+    <div class="editor-foot">
+      <button class="modal-btn cancel" data-act="noteCancel">取消</button>
+      <button class="modal-btn ok" data-act="noteSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 基础工具 ================= */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const KEY='xmj_workbench_v1';
+const pad=n=>String(n).padStart(2,'0');
+const dk=(d=new Date())=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const shift=(k,n)=>{const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return dk(d);};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const WEEK=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1700);}
+
+/* 应用内确认 / 输入弹窗：替代原生 confirm / prompt，兼容沙箱预览（原生对话框常被禁用，导致点击无反应） */
+function openModal(o){
+  const ov=$('#appModal');
+  ov.querySelector('.modal-title').textContent=o.title||'';
+  const body=ov.querySelector('.modal-body');body.textContent='';
+  let inputEl=null;
+  if(o.message){const p=document.createElement('div');p.textContent=o.message;body.appendChild(p);}
+  if(o.input!==undefined){
+    inputEl=document.createElement(o.multiline?'textarea':'input');
+    inputEl.className='modal-input';inputEl.value=o.input==null?'':o.input;
+    body.appendChild(inputEl);
+  }
+  const ok=ov.querySelector('[data-modal="ok"]'),cancel=ov.querySelector('[data-modal="cancel"]');
+  ok.textContent=o.okText||'确定';cancel.textContent=o.cancelText||'取消';
+  ov.classList.add('show');
+  const done=(val)=>{ov.classList.remove('show');ok.onclick=null;cancel.onclick=null;if(o.onOk)o.onOk(val);};
+  ok.onclick=()=>{done(inputEl!==null?inputEl.value:true);};
+  cancel.onclick=()=>{done(inputEl!==null?null:false);};
+  ov.onclick=(e)=>{if(e.target===ov){done(inputEl!==null?null:false);}};
+  if(inputEl)setTimeout(()=>inputEl.focus(),20);
+}
+function askConfirm(msg,onYes){openModal({message:msg,onOk:(r)=>{if(r)onYes();}});}
+function askPrompt(msg,def,onOk){openModal({message:msg,input:(def==null?'':def),onOk:(v)=>{if(v!==null)onOk(v);}});}
+
+/* 导出备份弹窗：把完整 JSON 展示出来，用户可「复制全部」或手动点「下载文件」保存。
+   用弹窗替代程序化 a.click() 下载——后者在沙箱预览/部分 iframe 里会被静默拦截，导致"点了没反应"。 */
+function openBackupModal(json,fname){
+  const ov=$('#backupModal');
+  $('#bkText').value=json;
+  let url='';
+  try{ url=URL.createObjectURL(new Blob([json],{type:'application/json'})); }catch(e){}
+  const link=$('#bkLink');
+  link.href=url||('data:application/json;charset=utf-8,'+encodeURIComponent(json));
+  link.download=fname;
+  link.textContent='下载文件';
+  ov.classList.add('show');
+  ov.onclick=(e)=>{ if(e.target===ov) ov.classList.remove('show'); };
+}
+
+/* 经验 / 心得 编辑器 */
+let noteEditId=null;
+let studyK=null; // 学习分区当前查看的日期（null=今天），零点自动重置为 TODAY
+function openNoteEditor(note){
+  const ed=$('#noteEditor');
+  $('#noteDate').value=note?note.date:dk();
+  $('#noteTitle').value=note?note.title||'':'';
+  $('#noteSummary').value=note?note.summary||'':'';
+  $('#noteContent').value=note?note.content||'':'';
+  ed.querySelector('.editor-title').textContent=note?'编辑经验 / 心得':'添加经验 / 心得';
+  noteEditId=note?note.id:null;
+  ed.classList.add('show');
+  setTimeout(()=>$('#noteTitle').focus(),20);
+}
+function closeNoteEditor(){$('#noteEditor').classList.remove('show');}
+
+/* ================= 数据层 ================= */
+const DEF_RITUAL=[
+  {id:'r1',n:'6:30 起床不赖床',s:'拉开窗帘见光'},
+  {id:'r2',n:'温水 300ml',s:'唤醒肠胃'},
+  {id:'r3',n:'空腹称体重',s:'固定时间更准'},
+  {id:'r4',n:'5 分钟拉伸 / 冥想',s:'唤醒身体'},
+  {id:'r5',n:'过一遍今日工作清单',s:'晨间梳理 10 分钟'},
+  {id:'r6',n:'背 10 个英语单词',s:'碎片时间'}
+];
+const DEF_THERAPY=[
+  {id:'t5',n:'针灸治疗',d:30,c:'#f4826e'},
+  {id:'t11',n:'红外线治疗',d:30,c:'#e8799f'},
+  {id:'t2',n:'作业疗法 OT',d:30,c:'#79d5c1'},
+  {id:'t3',n:'言语吞咽 ST',d:30,c:'#a7a6f0'},
+  {id:'t4',n:'物理因子治疗',d:20,c:'#f5b955'},
+  {id:'t1',n:'运动疗法 PT',d:40,c:'#48a4dc'},
+  {id:'t6',n:'推拿手法',d:20,c:'#6dbcea'},
+  {id:'t7',n:'平衡训练',d:20,c:'#4bbfa4'},
+  {id:'t8',n:'关节松动术',d:20,c:'#8583e0'},
+  {id:'t10',n:'康复评定',d:45,c:'#2f88c6'}
+];
+
+/* ================= 学习分区内容池 =================
+   三组内容按「天数」顺序轮流展示，每天一条；跨天（零点）自动覆盖到下一条。
+   内容确定性由日期推导，无需存储，刷新/跨天即更新。 */
+const STUDY_BASE='2026-01-01'; // 第 1 天基准日（当天显示池内第 1 条）
+const STUDY={
+  // 伤寒论条文（按六经顺序节选）
+  shanghan:[
+    {no:'1',t:'太阳之为病，脉浮，头项强痛而恶寒。'},
+    {no:'2',t:'太阳病，发热，汗出，恶风，脉缓者，名为中风。'},
+    {no:'3',t:'太阳病，或已发热，或未发热，必恶寒，体痛，呕逆，脉阴阳俱紧者，名为伤寒。'},
+    {no:'4',t:'伤寒一日，太阳受之，脉若静者，为不传；颇欲吐、若躁烦、脉数急者，为传也。'},
+    {no:'6',t:'太阳病，发热而渴，不恶寒者，为温病。'},
+    {no:'12',t:'太阳病，头痛发热，汗出恶风者，桂枝汤主之。'},
+    {no:'13',t:'太阳病，项背强几几，反汗出恶风者，桂枝加葛根汤主之。'},
+    {no:'14',t:'太阳病，项背强几几，无汗恶风，葛根汤主之。'},
+    {no:'16',t:'太阳病，项背强几几，无汗恶风，葛根汤主之。'},
+    {no:'35',t:'太阳病，头痛发热，身疼腰痛，骨节疼痛，恶风无汗而喘者，麻黄汤主之。'},
+    {no:'38',t:'太阳中风，脉浮紧，发热恶寒，身疼痛，不汗出而烦躁者，大青龙汤主之。'},
+    {no:'40',t:'伤寒表不解，心下有水气，干呕发热而咳，或渴、或利、或噎、或小腹胀满、或喘者，小青龙汤主之。'},
+    {no:'53',t:'病常自汗出者，此为荣气和，荣和者外不谐，以卫气不共荣气谐和故尔，以桂枝汤和之。'},
+    {no:'63',t:'发汗后，不可更行桂枝汤；汗出而喘，无大热者，可与麻黄杏仁甘草石膏汤。'},
+    {no:'96',t:'伤寒五六日，中风，往来寒热，胸胁苦满，嘿嘿不欲饮食，心烦喜呕……小柴胡汤主之。'},
+    {no:'180',t:'阳明之为病，胃家实是也。'},
+    {no:'182',t:'问曰：阳明病外证云何？答曰：身热，汗自出，不恶寒，反恶热也。'},
+    {no:'208',t:'阳明病，脉迟，虽汗出不恶寒者，其身必重，短气，腹满而喘，有潮热者，此外欲解，可攻里也，宜大承气汤。'},
+    {no:'219',t:'三阳合病，腹满身重，难以转侧，口不仁面垢，谵语遗尿……白虎汤主之。'},
+    {no:'219',t:'伤寒脉浮滑，此以表有热，里有寒，白虎汤主之。'},
+    {no:'263',t:'少阳之为病，口苦，咽干，目眩也。'},
+    {no:'273',t:'太阴之为病，腹满而吐，食不下，自利益甚，时腹自痛。'},
+    {no:'277',t:'自利不渴者，属太阴，以其脏有寒故也，当温之，宜服四逆辈。'},
+    {no:'281',t:'少阴之为病，脉微细，但欲寐也。'},
+    {no:'301',t:'少阴病，始得之，反发热，脉沉者，麻黄细辛附子汤主之。'},
+    {no:'303',t:'少阴病，得之二三日以上，心中烦，不得卧，黄连阿胶汤主之。'},
+    {no:'304',t:'少阴病，得之一二日，口中和，其背恶寒者，当灸之，附子汤主之。'},
+    {no:'326',t:'厥阴之为病，消渴，气上撞心，心中疼热，饥而不欲食，食则吐蛔。'},
+    {no:'337',t:'凡厥者，阴阳气不相顺接，便为厥。厥者，手足逆冷者是也。'}
+  ],
+  // 十二经脉循行（节选自《灵枢·经脉》，顺序：手三阴→手三阳→足三阳→足三阴）
+  meridians:[
+    {n:'手太阴肺经',t:'起于中焦，下络大肠，还循胃口，上膈属肺；从肺系横出腋下，下循臑内，行少阴、心主之前，下肘中，循臂内上骨下廉，入寸口，上鱼，循鱼际，出大指之端；支者从腕后直出次指内廉出其端。'},
+    {n:'手阳明大肠经',t:'起于大指次指之端，循指上廉，出合谷两骨之间，上入两筋之中，循臂上廉，入肘外廉，上臑外前廉，上肩，出髃骨之前廉，上出于柱骨之会上，下入缺盆，络肺，下膈，属大肠；支者从缺盆上颈，贯颊，入下齿中，还出挟口，交人中，左之右、右之左，上挟鼻孔。'},
+    {n:'足阳明胃经',t:'起于鼻之交颏中，旁纳太阳之脉，下循鼻外，入上齿中，还出挟口，环唇，下交承浆，却循颐后下廉，出大迎，循颊车，上耳前，过客主人，循发际至额颅；其支者从大迎前下人迎，循喉咙，入缺盆，下膈，属胃，络脾；直者从缺盆下乳内廉，下挟脐，入气街中。'},
+    {n:'足太阴脾经',t:'起于大指之端，循指内侧白肉际，过核骨后，上内踝前廉，上踹内，循胫骨后，交出厥阴之前，上膝股内前廉，入腹，属脾，络胃，上膈，挟咽，连舌本，散舌下；支者复从胃别上膈，注心中。'},
+    {n:'手少阴心经',t:'起于心中，出属心系，下膈，络小肠；其支者从心系上挟咽，系目系；其直者复从心系却上肺，下出腋下，循臑内后廉，行太阴、心主之后，下肘内，循臂内后廉，抵掌后锐骨之端，入掌内后廉，循小指之内出其端。'},
+    {n:'手太阳小肠经',t:'起于小指之端，循手外侧，上腕，出踝中，直上循臂骨下廉，出肘内侧两筋之间，上循臑外后廉，出肩解，绕肩胛，交肩上，入缺盆，络心，循咽，下膈，抵胃，属小肠；支者从缺盆循颈上颊，至目锐眦，却入耳中；支者别颊上䪼，抵鼻，至目内眦。'},
+    {n:'足太阳膀胱经',t:'起于目内眦，上额，交巅；其支者从巅至耳上角；其直者从巅入络脑，还出别下项，循肩髆内，挟脊抵腰中，入循膂，络肾，属膀胱；支者从腰中下挟脊，贯臀，入腘中；支者从髆内左右别下贯胛，挟脊内，过髀枢，循髀外后廉，下合腘中，以下贯踹内，出外踝之后，循京骨，至小指外侧。'},
+    {n:'足少阴肾经',t:'起于小指之下，邪走足心，出于然谷之下，循内踝之后，别入跟中，以上踹内，出腘内廉，上股内后廉，贯脊，属肾，络膀胱；其直者从肾上贯肝膈，入肺中，循喉咙，挟舌本；支者从肺出络心，注胸中。'},
+    {n:'手厥阴心包经',t:'起于胸中，出属心包络，下膈，历络三焦；其支者循胸出胁，下腋三寸，上抵腋下，循臑内，行太阴、少阴之间，入肘中，下臂，行两筋之间，入掌中，循中指出其端；支者别掌中，循小指次指出其端。'},
+    {n:'手少阳三焦经',t:'起于小指次指之端，上出两指之间，循手表腕，出臂外两骨之间，上贯肘，循臑外，上肩，而交出足少阳之后，入缺盆，布膻中，散络心包，下膈，遍属三焦；支者从膻中上出缺盆，上项，系耳后，直上出耳上角，以屈下颊至䪼；支者从耳后入耳中，出走耳前，过客主人前，交颊，至目锐眦。'},
+    {n:'足少阳胆经',t:'起于目锐眦，上抵头角，下耳后，循颈，行手少阳之前，至肩上，却交出手少阳之后，入缺盆；其支者从耳后入耳中，出走耳前，至目锐眦后；其直者从缺盆下腋，循胸，过季胁，下合髀厌中，以下循髀阳，出膝外廉，下外辅骨之前，直下抵绝骨之端，下出外踝之前，循足跗上，入小指次指之间；支者别跗上，入大指之间，循大指歧骨内出其端，还贯爪甲，出三毛。'},
+    {n:'足厥阴肝经',t:'起于大指丛毛之际，上循足跗上廉，去内踝一寸，上踝八寸，交出太阴之后，上腘内廉，循股阴，入毛中，过阴器，抵小腹，挟胃，属肝，络胆，上贯膈，布胁肋，循喉咙之后，上入颃颡，连目系，上出额，与督脉会于巅；支者从目系下颊里，环唇内；支者复从肝别贯膈，上注肺。'}
+  ],
+  // 方剂方解
+  formulas:[
+    {n:'桂枝汤',c:'桂枝、芍药、生姜、大枣、炙甘草',s:'解肌发表，调和营卫。桂、芍一散一收，姜、枣、草和中益气，共奏扶正祛邪之功。主治太阳中风表虚证。'},
+    {n:'麻黄汤',c:'麻黄、桂枝、杏仁、炙甘草',s:'发汗解表，宣肺平喘。麻、桂相须以发汗，杏仁降利肺气，甘草和中。主治太阳伤寒表实证。'},
+    {n:'小青龙汤',c:'麻黄、芍药、细辛、干姜、桂枝、半夏、五味子、甘草',s:'解表散寒，温肺化饮。麻、桂解表，姜、辛、夏温化寒饮，五味子敛肺，芍药甘草缓急。主治外寒内饮。'},
+    {n:'大青龙汤',c:'麻黄、桂枝、甘草、杏仁、生姜、大枣、石膏',s:'发汗解表，兼清里热。重用麻黄解表，石膏清郁热。主治表寒里热、身疼痛而烦躁。'},
+    {n:'白虎汤',c:'石膏、知母、甘草、粳米',s:'清热生津。石膏、知母大清阳明气分热，草、米护胃和中。主治阳明气分热盛、大热大汗大渴脉洪大。'},
+    {n:'小柴胡汤',c:'柴胡、黄芩、半夏、生姜、人参、大枣、炙甘草',s:'和解少阳。柴胡透达半表之邪，黄芩清泄半里之热，参、枣、草扶正，姜、夏和胃降逆。主治少阳半表半里证。'},
+    {n:'大柴胡汤',c:'柴胡、黄芩、芍药、半夏、生姜、枳实、大黄、大枣',s:'和解少阳，内泻热结。小柴胡去参草加枳、黄、芍，表里双解。主治少阳阳明合病。'},
+    {n:'半夏泻心汤',c:'半夏、黄芩、干姜、人参、黄连、大枣、甘草',s:'寒热平调，消痞散结。芩、连苦降清热，姜、夏辛开散寒，参、草、枣补中。主治寒热错杂之痞证。'},
+    {n:'四君子汤',c:'人参、白术、茯苓、甘草',s:'益气健脾。四味甘温，补中和胃，为健脾益气之基础方。主治脾胃气虚。'},
+    {n:'四物汤',c:'熟地、当归、白芍、川芎',s:'补血调血。地、芍滋阴养血，归、芎活血行滞，动静相宜。主治血虚血滞。'},
+    {n:'六味地黄丸',c:'熟地、山萸肉、山药、泽泻、丹皮、茯苓',s:'滋补肾阴。三补（地、萸、薯）配三泻（泽、丹、苓），补而不滞。主治肾阴不足。'},
+    {n:'逍遥散',c:'柴胡、当归、白芍、白术、茯苓、甘草、薄荷、生姜',s:'疏肝解郁，健脾养血。柴、薄疏肝，归、芍养血，术、苓、草健脾。主治肝郁脾虚。'},
+    {n:'归脾汤',c:'白术、茯神、黄芪、龙眼肉、酸枣仁、人参、木香、甘草、当归、远志',s:'益气补血，健脾养心。参、芪、术、草补气，归、龙眼、枣仁养血安神，木香理气。主治心脾两虚、气血不足。'},
+    {n:'补中益气汤',c:'黄芪、人参、白术、当归、陈皮、升麻、柴胡、甘草',s:'补中益气，升阳举陷。黄芪为君，升、柴升举清阳，归、陈调和气血。主治脾胃气虚、中气下陷。'},
+    {n:'理中汤',c:'人参、干姜、白术、甘草',s:'温中祛寒，补气健脾。干姜温中，参、术、草补脾。主治脾胃虚寒、腹痛吐利。'},
+    {n:'真武汤',c:'茯苓、芍药、生姜、白术、附子',s:'温阳利水。附子温肾阳，术、苓健脾利水，芍、姜和营。主治脾肾阳虚、水气内停。'},
+    {n:'黄连阿胶汤',c:'黄连、黄芩、芍药、鸡子黄、阿胶',s:'滋阴降火。芩、连清心火，胶、芍、鸡子黄滋肾阴。主治少阴病阴虚火旺、心烦不寐。'},
+    {n:'五苓散',c:'猪苓、泽泻、白术、茯苓、桂枝',s:'利水渗湿，温阳化气。二苓、泽泻利水，术、桂健脾化气。主治蓄水证、小便不利。'},
+    {n:'温胆汤',c:'半夏、竹茹、枳实、陈皮、甘草、茯苓、生姜、大枣',s:'理气化痰，清胆和胃。夏、枳、陈化痰理气，竹茹清胆，苓、草宁心。主治胆郁痰扰。'},
+    {n:'血府逐瘀汤',c:'桃仁、红花、当归、生地、川芎、赤芍、牛膝、桔梗、柴胡、枳壳、甘草',s:'活血祛瘀，行气止痛。桃、红、归、芎等活血，柴、枳疏肝理气，牛膝引血下行。主治胸中血瘀。'}
+  ]
+};
+function studyDayIndex(k){
+  const a=new Date(STUDY_BASE+'T00:00:00'),b=new Date((k||TODAY)+'T00:00:00');
+  return Math.round((b-a)/86400000); // 0 = 基准日当天
+}
+function studyPick(pool,k){
+  const i=((studyDayIndex(k)%pool.length)+pool.length)%pool.length;
+  return pool[i];
+}
+const THERAPY_VER=3;
+let S=load();
+/* 一次性迁移 + 自愈：版本落后，或数据已偏离「针灸在PT前 / 含红外线 / 无牵引」时，重新规整。
+   这样即使旧存档或预览存储被重置，打开即自动回到规范顺序，不会"变没"。 */
+function therapyNeedsRepair(list){
+  const arr=list||[];
+  if(arr.some(t=>t.id==='t9'))return true;                          // 器械牵引残留
+  if(!arr.some(t=>t.n&&t.n.indexOf('红外线')>=0))return true;        // 缺红外线治疗
+  const zi=arr.findIndex(t=>t.id==='t5'),pi=arr.findIndex(t=>t.id==='t1');
+  if(zi<0||pi<0||zi>pi)return true;                                 // 针灸应在PT之前
+  return false;
+}
+if((S.profile.therapyVer||0)<THERAPY_VER||therapyNeedsRepair(S.profile.therapy)){
+  S.profile.therapy=migrateTherapy(S.profile.therapy);
+  S.profile.therapyVer=THERAPY_VER;
+  save();
+}
+
+function blankDay(){
+  return{
+    ritual:{}, burn:0, weight:null,
+    meals:[],
+    work:{total:0,done:0,unvisited:0,beds:[],urgent:[],routine:[],overdue:[],appt:[],neweval:[],records:[],discharged:[]}
+  };
+}
+function defProfile(){
+  return{name:'小马甲',kcalTarget:1500,burnTarget:400,wTarget:55,therapy:JSON.parse(JSON.stringify(DEF_THERAPY)),therapyVer:THERAPY_VER};
+}
+/* 一次性迁移：针灸治疗与运动疗法 PT 互换位置；针灸后插入红外线治疗(30min)；删除器械牵引。
+   保留各项目现有属性(名称/时长/颜色)与用户自定义项目，仅调整顺序与增删。 */
+function migrateTherapy(list){
+  let arr=(list||[]).slice();
+  arr=arr.filter(t=>t.id!=='t9');                       // 删除器械牵引
+  const zhen=arr.find(t=>t.id==='t5');                  // 针灸治疗
+  const pt=arr.find(t=>t.id==='t1');                    // 运动疗法 PT
+  let ir=arr.find(t=>t.n&&t.n.indexOf('红外线')>=0);
+  const irId=ir?ir.id:null;
+  arr=arr.filter(t=>t.id!=='t5'&&t.id!=='t1'&&t.id!==irId); // 取出针灸/PT/已有红外线，稍后重排
+  if(!ir)ir={id:'t11',n:'红外线治疗',d:30,c:'#e8799f'};
+  const out=[];
+  if(zhen)out.push(zhen);                               // 针灸置顶
+  out.push(ir);                                         // 针灸后紧跟红外线
+  if(pt)out.push(pt);                                   // PT 紧随其后
+  out.push(...arr);                                     // 其余按原相对顺序追加
+  return out;
+}
+function load(){
+  try{
+    const o=JSON.parse(localStorage.getItem(KEY))||{};
+    const p=Object.assign(defProfile(),o.profile||{});
+    if(!Array.isArray(p.therapy)||!p.therapy.length)p.therapy=JSON.parse(JSON.stringify(DEF_THERAPY));
+    return{days:o.days||{},profile:p,notes:Array.isArray(o.notes)?o.notes:[]};
+  }catch(e){return{days:{},profile:defProfile()};}
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}
+  catch(e){
+    // 容量不足：清掉 7 天前的照片再存
+    const keep=new Set([0,1,2,3,4,5,6].map(i=>shift(TODAY,-i)));
+    Object.keys(S.days).forEach(k=>{if(!keep.has(k))(S.days[k].meals||[]).forEach(m=>m.img='');});
+    try{localStorage.setItem(KEY,JSON.stringify(S));toast('存储已满，已清理旧照片');}catch(_){toast('存储空间不足');}
+  }
+}
+function day(k=TODAY){
+  if(!S.days[k])S.days[k]=blankDay();
+  const d=S.days[k],b=blankDay();
+  for(const key in b){if(d[key]==null)d[key]=b[key];}
+  for(const key in b.work){if(d.work[key]==null)d.work[key]=b.work[key];}
+  return d;
+}
+let TODAY=dk();
+let D=day();
+
+const QUOTES=[
+  '今天的每一次坚持，都是明天更好的自己。',
+  '不必惊天动地，稳稳地完成今天就很了不起。',
+  '身体在变好，工作在变顺，你只是还没看到复利。',
+  '把大目标拆成今天的一小步，然后走完它。',
+  '照顾好病人之前，先照顾好自己。',
+  '自律不是苦行，是给未来的自己攒底气。',
+  '一天没做好没关系，别让它变成两天。',
+  '你现在流的汗，是以后不用发的愁。',
+  '认真吃饭，好好训练，专注工作，其余交给时间。',
+  '进度慢一点没关系，方向对就一直在赢。',
+  '晨间十分钟的梳理，抵得过一天的手忙脚乱。',
+  '别小看今天，它是唯一能改变的一天。'
+];
+
+/* ================= 开屏 ================= */
+(function splash(){
+  const now=new Date();
+  $('#spDate').textContent=`${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日`;
+  $('#spWeek').textContent=WEEK[now.getDay()];
+  const idx=(now.getFullYear()*372+now.getMonth()*31+now.getDate())%QUOTES.length;
+  $('#spQuote').textContent='「 '+QUOTES[idx]+' 」';
+  const h=now.getHours();
+  $('#spTip').textContent=h<6?'夜深了，也别忘了休息':h<11?'早安，新的一天开始了':h<14?'午间加油':h<18?'下午稳住节奏':'晚上好，收个漂亮的尾';
+
+  const cv=$('#sky'),ctx=cv&&cv.getContext&&cv.getContext('2d');
+  if(!ctx)return;
+  let W,H,stars=[],shoot=null;
+  function init(){
+    W=cv.width=cv.offsetWidth*devicePixelRatio;H=cv.height=cv.offsetHeight*devicePixelRatio;
+    stars=[];const n=Math.round(W*H/16000);
+    for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H*.82,r:Math.random()*1.5+.35,a:Math.random(),v:Math.random()*.018+.004});
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // 月亮
+    const mx=W*.79,my=H*.16,mr=Math.min(W,H)*.055;
+    const g=ctx.createRadialGradient(mx,my,mr*.4,mx,my,mr*4);
+    g.addColorStop(0,'rgba(226,240,255,.34)');g.addColorStop(1,'rgba(226,240,255,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(mx,my,mr*4,0,7);ctx.fill();
+    ctx.fillStyle='#eef6ff';ctx.beginPath();ctx.arc(mx,my,mr,0,7);ctx.fill();
+    ctx.fillStyle='#0e2244';ctx.beginPath();ctx.arc(mx-mr*.42,my-mr*.3,mr*.92,0,7);ctx.fill();
+    // 星星
+    stars.forEach(s=>{
+      s.a+=s.v;const al=.28+Math.abs(Math.sin(s.a))*.72;
+      ctx.fillStyle='rgba(255,255,255,'+al+')';
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();
+    });
+    // 流星
+    if(!shoot&&Math.random()<0.006)shoot={x:Math.random()*W*.6,y:Math.random()*H*.35,l:0};
+    if(shoot){
+      shoot.l+=W*.012;shoot.x+=W*.012;shoot.y+=W*.006;
+      const gr=ctx.createLinearGradient(shoot.x,shoot.y,shoot.x-shoot.l,shoot.y-shoot.l*.5);
+      gr.addColorStop(0,'rgba(255,255,255,.9)');gr.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.strokeStyle=gr;ctx.lineWidth=1.6*devicePixelRatio;ctx.beginPath();
+      ctx.moveTo(shoot.x,shoot.y);ctx.lineTo(shoot.x-shoot.l,shoot.y-shoot.l*.5);ctx.stroke();
+      if(shoot.l>W*.42)shoot=null;
+    }
+    requestAnimationFrame(draw);
+  }
+  init();draw();addEventListener('resize',init);
+  $('#spBtn').onclick=()=>{$('#splash').classList.add('hide');setTimeout(()=>$('#splash').style.display='none',760);};
+})();
+
+/* ================= 统计计算 ================= */
+function nowHM(){const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes());}
+function hm2m(s){if(!s)return null;const[a,b]=s.split(':').map(Number);return a*60+b;}
+function durMin(s,e){const a=hm2m(s),b=hm2m(e);if(a==null||b==null)return 0;return b>=a?b-a:b+1440-a;}
+function fmtDur(m){return m>=60?(Math.floor(m/60)+' 时 '+(m%60?m%60+' 分':'')).trim():m+' 分';}
+function theraItem(id){return (S.profile.therapy||[]).find(t=>t.id===id)||{n:'其他',d:30,c:'#7f9bb0'};}
+/* 在“开始时间”基础上加 n 分钟，返回 HH:MM（跨午夜取模） */
+function addMin(s,add){let m=((hm2m(s)+add)%1440+1440)%1440;return pad(Math.floor(m/60))+':'+pad(m%60);}
+/* 治疗名取短标签：带英文代号(PT/OT/ST)优先，否则取前两个字 */
+function shortName(n){const p=String(n).split(' ');return (p[1]&&/^[A-Za-z]+$/.test(p[1]))?p[1]:p[0].slice(0,2);}
+/* 某床今日各项治疗的频次 */
+function bedRx(bed){
+  const m={};
+  (D.work.records||[]).forEach(r=>{if(String(r.bed||'').trim()===bed)m[r.tid]=(m[r.tid]||0)+1;});
+  return Object.keys(m).map(tid=>{const it=theraItem(tid);return {n:it.n,short:shortName(it.n),c:it.c,cnt:m[tid]};});
+}
+/* ================= 患者信息工具 ================= */
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtDT(s){if(!s)return '—';const d=new Date(s);return `${dk(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+function toLocalInput(s){if(!s)return '';const d=new Date(s);return `${dk(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+/* 住院天数：入院当天算第 1 天（病历习惯） */
+function hospDays(s){if(!s)return '—';const a=new Date(s),b=new Date();const dayMs=86400000;
+  const diff=Math.floor((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/dayMs);
+  return Math.max(1,diff+1);}
+/* 本周（周一~周日）7 个日期 */
+function weekDates(){
+  const now=new Date(),dow=now.getDay(),mon=(dow+6)%7;
+  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-mon);
+  const arr=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push(dk(d));}
+  return arr;
+}
+/* 本周内「床号|项目|日期」已打卡集合 */
+function weekCheckSet(wd){
+  const set=new Set();
+  wd.forEach(k=>{((S.days[k]&&S.days[k].work.records)||[]).forEach(r=>{if(r.bed&&r.tid)set.add(r.bed+'|'+r.tid+'|'+k);});});
+  return set;
+}
+/* 本周（周一~周日）7 天，含真实日期：返回 [{k:'YYYY-MM-DD', md:'MM-DD', wd:'一'..'日'}] */
+function weekCols(){
+  const now=new Date(),dow=now.getDay(),mon=(dow+6)%7;
+  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-mon);
+  const arr=[];
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push({k:dk(d),md:dk(d).slice(5),wd:WEEK[d.getDay()].slice(2,3)});}
+  return arr;
+}
+/* 该床「入院起 30 天」模板：返回 [{k:'YYYY-MM-DD', md:'MM-DD', wd:'一'..'日'}]，未设入院时间则从今天起算 */
+function monthCols(b){
+  const s=(b&&b.admit)?b.admit.slice(0,10):'';
+  const base=s?new Date(s+'T00:00:00'):new Date();
+  const start=new Date(base.getFullYear(),base.getMonth(),base.getDate());
+  const arr=[];
+  for(let i=0;i<40;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push({k:dk(d),md:dk(d).slice(5),wd:WEEK[d.getDay()].slice(2,3)});}
+  return arr;
+}
+/* 该床「入院起 40 天」内「项目__日期」已录入治疗记录的集合（用于自动打勾） */
+function recDoneSet(b){
+  const set=new Set();const n=b&&b.n;
+  monthCols(b).forEach(c=>{((S.days[c.k]&&S.days[c.k].work.records)||[]).forEach(r=>{if(String(r.bed||'').trim()===n&&r.tid)set.add(r.tid+'__'+c.k);});});
+  return set;
+}
+/* 该床「入院起 40 天」内，各「项目__日期」对应治疗记录的起止时间 {s,end,note}（用于打卡表展示） */
+function recTimeMap(b){
+  const map={};const n=b&&b.n;
+  monthCols(b).forEach(c=>{((S.days[c.k]&&S.days[c.k].work.records)||[]).forEach(r=>{
+    if(String(r.bed||'').trim()===n&&r.tid){
+      const key=r.tid+'__'+c.k,cur=map[key];
+      if(!cur){map[key]={s:r.s||'',end:r.end||'',note:r.note||''};}
+      else{
+        if(r.s&&(!cur.s||r.s<cur.s))cur.s=r.s;
+        if(r.end&&(!cur.end||r.end>cur.end))cur.end=r.end;
+        if(r.note)cur.note=r.note;
+      }
+    }
+  });});
+  return map;
+}
+/* 读取某床某日某项目的打卡状态 {done,note} */
+function ckGet(b,tid,date){return ((b.checks||{})[tid+'__'+date])||{done:false,note:''};}
+/* 滚动到数据来源卡片并闪一下 */
+function jumpTo(sel,tip){
+  const el=$(sel);if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
+  if(tip)toast(tip);
+}
+function recStat(k=TODAY){
+  const rs=day(k).work.records||[];
+  const fin=rs.filter(r=>r.end),ing=rs.filter(r=>!r.end);
+  const bn=r=>String(r.bed||'').trim();
+  const finBeds=new Set(fin.map(bn).filter(Boolean));
+  const ingBeds=new Set(ing.map(bn).filter(Boolean));
+  return{
+    all:rs.length,fin:fin.length,ing:ing.length,
+    min:fin.reduce((a,r)=>a+durMin(r.s,r.end),0),
+    finBeds,                                  // 已完成治疗的床位（去重）
+    ingBeds,                                  // 进行中的床位（去重）
+    noBed:fin.filter(r=>!bn(r)).length        // 完成但没填床号的次数
+  };
+}
+/* 全院口径：在院总人数 = 床号清单数量；已完成治疗 = 治疗记录中已完成的床位数（去重） */
+function bedList(k=TODAY){return day(k).work.beds||[];}
+function inpatientTotal(k=TODAY){return bedList(k).length;}
+function treatedCount(k=TODAY){return recStat(k).finBeds.size;}
+function mealKcal(k=TODAY){return (day(k).meals||[]).reduce((a,m)=>a+(+m.kcal||0),0);}
+function ritualDone(k=TODAY){return DEF_RITUAL.filter(r=>day(k).ritual[r.id]).length;}
+function isCheck(k){
+  if(!S.days[k])return false;
+  return ritualDone(k)>=4;
+}
+function streak(){
+  let n=0,k=TODAY;
+  if(!isCheck(k))k=shift(k,-1);
+  while(isCheck(k)){n++;k=shift(k,-1);}
+  return n;
+}
+function weightSeries(n=14){
+  const a=[];for(let i=n-1;i>=0;i--){const k=shift(TODAY,-i);const w=S.days[k]&&S.days[k].weight;a.push({k,w:w?+w:null});}
+  return a;
+}
+
+/* ================= 渲染框架 ================= */
+let route='home',bedOpen=null,bedInfoOpen=null,recBed='',recPickOpen=true,ckHidden={},ckActive=null;
+function render(){
+  D=day();
+  const m=$('#main');
+  m.innerHTML=({home:vHome,work:vWork,info:vInfo,discharge:vDischarge,notes:vNotes,study:vStudy})[route]();
+  m.classList.remove('fade');void m.offsetWidth;m.classList.add('fade');
+  $$('.rail-item').forEach(b=>b.classList.toggle('on',b.dataset.nav===route));
+}
+function ring(pct,val,label,color){
+  const r=40,c=2*Math.PI*r,off=c*(1-Math.min(1,pct));
+  return `<div class="ring"><svg width="96" height="96" viewBox="0 0 96 96">
+    <circle cx="48" cy="48" r="${r}" stroke="#e4f2fc" stroke-width="9" fill="none"/>
+    <circle cx="48" cy="48" r="${r}" stroke="${color}" stroke-width="9" fill="none" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset .6s"/>
+  </svg><div class="c"><b>${val}</b><small>${label}</small></div></div>`;
+}
+
+/* ================= 首页 ================= */
+function vHome(){
+  const now=new Date(),h=now.getHours();
+  const hi=h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好';
+  const w=D.work;
+  const inTotal=inpatientTotal(),treated=treatedCount();
+  const pendTreat=Math.max(0,inTotal-treated);
+  const urg=w.urgent.filter(t=>!t.done).length,over=w.overdue.length;
+
+  return `
+  <div class="page-head">
+    <div><h1>${hi}，小马甲</h1><div class="sub">${now.getMonth()+1} 月 ${now.getDate()} 日 · ${WEEK[now.getDay()]}</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-t"><h3>今日速览</h3><span class="act" data-act="nav" data-to="work">去工作台 ›</span></div>
+    <div class="grid3">
+      <div class="stat b" data-act="nav" data-to="work"><div class="n">${inTotal}</div><div class="l">在院康复</div></div>
+      <div class="stat ${pendTreat?'a':'m'}" data-act="nav" data-to="work"><div class="n">${pendTreat}</div><div class="l">待完成治疗</div></div>
+      <div class="stat ${over?'c':'m'}" data-act="nav" data-to="work"><div class="n">${over}</div><div class="l">逾期事项</div></div>
+      <div class="stat ${urg?'c':'m'}" data-act="nav" data-to="work"><div class="n">${urg}</div><div class="l">紧急待办</div></div>
+    </div>
+  </div>
+
+  <div class="card backup-card">
+    <div class="card-t"><h3>本地数据备份</h3><span class="act" data-act="dataExport">导出到本机 ›</span></div>
+    <div class="backup-row">
+      <div class="backup-info">
+        <div>所有数据已自动存在本机浏览器（localStorage）。</div>
+        <div class="muted">${S.backupAt?('上次导出备份：'+S.backupAt):'尚未导出过备份文件'}</div>
+      </div>
+      <button class="backup-btn" data-act="dataImport">导入备份</button>
+    </div>
+    <div class="muted backup-tip">建议定期「导出到本机」保存一份 JSON 文件；换设备或清缓存后可「导入备份」恢复。</div>
+  </div>`;
+}
+
+/* ================= 工作 ================= */
+function vWork(){
+  const w=D.work;
+  const TH=S.profile.therapy;
+  const R=recStat();
+  const total=inpatientTotal();          // ← 床号清单数量
+  const done=R.finBeds.size;             // ← 治疗记录中已完成的床位（去重）
+  const pend=Math.max(0,total-done),unv=Math.min(+w.unvisited||0,total);
+  const urg=w.urgent.filter(t=>!t.done),rou=w.routine.filter(t=>!t.done);
+  const pct=total?Math.round(done/total*100):0;
+  // 记录里出现、但床号清单里没有的床位
+  const orphan=[...R.finBeds,...R.ingBeds].filter(b=>!w.beds.some(x=>x.n===b));
+  // 旧版手动填写过、但还没补录床号
+  const legacy=(+w.total||0)>total?(+w.total||0):0;
+  return `
+  <div class="page-head">
+    <div><h1>今日工作盘</h1><div class="sub">住院康复 · ${TODAY} 晨间梳理</div></div>
+    <div class="pill" style="background:${w.overdue.length?'var(--coral-bg)':'var(--mint-bg)'};color:${w.overdue.length?'#df5a3f':'#33a084'}">
+      ${w.overdue.length?'逾期 '+w.overdue.length+' 项':'无逾期'}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-t"><h3>治疗总览</h3><span class="act">完成度 ${pct}%</span></div>
+    <div class="grid4" style="margin-bottom:11px">
+      <div class="stat b lk" data-act="goBeds"><div class="n">${total}</div><div class="l">在院总人数<em class="src">床号</em></div></div>
+      <div class="stat m lk" data-act="goRec"><div class="n">${done}</div><div class="l">已完成治疗<em class="src">记录</em></div></div>
+      <div class="stat ${pend?'a':'m'}"><div class="n">${pend}</div><div class="l">待完成治疗</div></div>
+      <div class="stat ${unv?'c':'m'}"><div class="n" data-act="num" data-f="unvisited">${unv}</div><div class="l">未查房</div></div>
+    </div>
+    <div class="bar mint"><i style="width:${pct}%"></i></div>
+    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:6px">
+      <span>今日治疗 ${R.fin} 次 · 累计 ${fmtDur(R.min)}${R.ing?' · 进行中 '+R.ing:''}</span>
+      <span>未查房可点击修改</span>
+    </div>
+    <div class="lnk-note">
+      <span><b>${total}</b> 来自床号清单，<b>${done}</b> 来自治疗记录已完成的床位，自动同步</span>
+      ${R.noBed?`<span class="warn">· 另有 ${R.noBed} 次完成记录未填床号，不计入人数</span>`:''}
+      ${orphan.length?`<span class="warn">· ${orphan.join('、')} 未在床号清单中</span>`:''}
+      ${legacy?`<span class="warn">· 原手动填写 ${legacy} 人，请到床号清单补录</span>`:''}
+    </div>
+  </div>
+
+  ${vRecords(R)}
+  ${vTherapy()}
+
+  <div class="card" id="cardBeds">
+    <div class="card-t"><h3>床号清单</h3><span class="act">${w.beds.length} 床 · 即在院总人数</span></div>
+    <div class="bedlist">
+      ${w.beds.length?w.beds.map(b=>{
+        const fin=R.finBeds.has(b.n),ing=R.ingBeds.has(b.n),rx=bedRx(b.n),miss=rx.length===0;
+        const plan=(b.plan||[]);
+        return `
+        <div class="bedblock">
+          <div class="bedrow ${fin?'ok':ing?'ing':miss?'miss':''} ${bedInfoOpen===b.id||bedOpen===b.id?'open':''}">
+            <div class="bl ${bedInfoOpen===b.id?'open':''}" data-act="bedInfo" data-id="${b.id}" title="点击修改该床基本信息">
+              <b>${fin?'✓ ':ing?'▶ ':miss?'⚠ ':''}${b.n}床${plan.length?`<em class="plan-pill">周计划 ${plan.length} 项</em>`:''}</b><em class="edit-hint">✎</em>
+              ${rx.length?`<div class="rx">${rx.map(x=>`<span class="rx-tag" style="background:${x.c}1f;color:${x.c};border-color:${x.c}66">${x.short}×${x.cnt}</span>`).join('')}</div>`
+                :`<small class="${miss?'miss-txt':'muted'}">${miss?'今日未治疗':'暂无治疗记录'}</small>`}
+            </div>
+            <i class="edit" data-act="bedToggle" data-id="${b.id}">${bedOpen===b.id?'收起计划':'设置治疗'}</i>
+            <i class="out" data-act="discharge" data-id="${b.id}">出院</i>
+            <i class="del" data-act="delBed" data-id="${b.id}">×</i>
+          </div>
+          ${bedInfoOpen===b.id?`
+          <div class="plan-ed">
+            <div class="plan-ed-h">${b.n}床 · 基本信息（直接点字段修改，自动保存）</div>
+            <div class="info-grid">
+              <div class="f" style="grid-column:1/-1"><label>床号</label><input class="inp sm bedno" data-act="bedNo" data-id="${b.id}" value="${esc(b.n)}" style="font-weight:700;color:var(--blue-700)"></div>
+              <div class="f"><label>姓名</label><input class="inp sm" data-act="bedName" data-id="${b.id}" value="${esc(b.name||'')}" placeholder="未填"></div>
+              <div class="f"><label>性别</label>
+                <select class="inp sm" data-act="bedGender" data-id="${b.id}">
+                  ${['','男','女','其他'].map(g=>`<option value="${g}" ${b.gender===g?'selected':''}>${g||'未填'}</option>`).join('')}
+                </select></div>
+              <div class="f"><label>诊断</label><input class="inp sm" data-act="bedDx" data-id="${b.id}" value="${esc(b.dx||'')}" placeholder="未填"></div>
+              <div class="f"><label>入院时间</label><input type="datetime-local" class="inp sm" data-act="bedAdmit" data-id="${b.id}" value="${toLocalInput(b.admit)}"></div>
+              <div class="f" style="grid-column:1/-1"><label>住院天数</label><div class="ro">${hospDays(b.admit)==='—'?'—':hospDays(b.admit)+' 天'}</div></div>
+            </div>
+          </div>`:''}
+          ${bedOpen===b.id?`
+          <div class="plan-ed">
+            <div class="plan-ed-h">${b.n}床 · 每周治疗计划（项目 + 频次）</div>
+            ${plan.length?plan.map(p=>{
+              const it=theraItem(p.tid);
+              return `<div class="plan-row">
+                <span class="dot" style="background:${it.c}"></span>
+                <b class="plan-nm">${it.n}</b>
+                <div class="freq-ctl">
+                  <button class="stp" data-act="planFreqDown" data-id="${b.id}" data-tid="${p.tid}">−</button>
+                  <span class="freq-n">${p.freq} 次/周</span>
+                  <button class="stp" data-act="planFreqUp" data-id="${b.id}" data-tid="${p.tid}">＋</button>
+                  <button class="del sm" data-act="planDel" data-id="${b.id}" data-tid="${p.tid}">×</button>
+                </div>
+              </div>`;
+            }).join(''):'<div class="muted" style="font-size:11.5px;padding:4px 0">还没设置周治疗计划</div>'}
+            <div class="addrow">
+              <select class="inp" id="planTid-${b.id}">${TH.map(t=>`<option value="${t.id}">${t.n}</option>`).join('')}</select>
+              <input class="inp" type="number" min="1" max="7" value="3" id="planF-${b.id}" style="flex:0 0 50px">
+              <button class="btn sm" data-act="planAdd" data-id="${b.id}">添加</button>
+            </div>
+          </div>`:''}
+        </div>`;
+      }).join(''):'<div class="empty">还没录入床号 · 录入后自动计入在院总人数</div>'}
+    </div>
+    ${w.beds.length?`<div class="lnk-note"><span>✓ 已完成 <b>${done}</b> 床${R.ing?` · ▶ 进行中 <b>${R.ingBeds.size}</b> 床`:''} · 未开始 <b>${Math.max(0,total-done-R.ingBeds.size)}</b> 床</span></div>`:''}
+    <div class="addrow">
+      <input class="inp" placeholder="输入床号，可用空格/逗号批量添加" data-act="addBed">
+      <button class="btn sm" data-act="addBedBtn">添加</button>
+    </div>
+  </div>
+
+  <div class="card" style="border:1px solid #fbd9d2;background:linear-gradient(180deg,#fffaf9,#fff)">
+    <div class="card-t"><h3 style="color:#df5a3f">逾期未完成 · 高亮提醒</h3><span class="act" style="color:#df5a3f">${w.overdue.length} 项</span></div>
+    ${w.overdue.length?w.overdue.map(o=>`
+      <div class="over-item">
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13.5px;word-break:break-all">${o.t}</div>
+            <div style="margin-top:5px;display:flex;gap:6px;align-items:center">
+              <span class="tag c">${o.type}</span><span class="tag g">逾期 ${o.d} 天</span>
+            </div>
+          </div>
+          <button class="btn sm" data-act="clearOver" data-id="${o.id}">处理</button>
+        </div>
+      </div>`).join(''):'<div class="empty">暂无逾期事项，保持住</div>'}
+    <div class="addrow">
+      <select class="inp" style="flex:0 0 96px" id="ovType">
+        <option>复查</option><option>方案调整</option><option>家属沟通</option><option>病历书写</option><option>会诊</option><option>其他</option>
+      </select>
+      <input class="inp" placeholder="逾期内容（如 12床 复查肌力）" data-act="addOver">
+      <input class="inp" style="flex:0 0 56px" type="number" min="1" value="1" id="ovDays">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-t"><h3 style="color:#e15f45">紧急待办 · 当日必须完成</h3><span class="act">${urg.length}/${w.urgent.length}</span></div>
+    ${w.urgent.length?w.urgent.map(t=>`
+      <div class="todo ${t.done?'done':''}" style="${t.done?'':'background:var(--coral-bg);border-radius:10px;padding:9px 10px;margin-bottom:6px;border-bottom:0'}">
+        <div class="box" data-act="tgTodo" data-list="urgent" data-id="${t.id}" style="${t.done?'':'border-color:#f4a795'}">
+          <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg></div>
+        <div class="t">${t.t}</div>
+        <button class="del" data-act="delTodo" data-list="urgent" data-id="${t.id}">×</button>
+      </div>`).join(''):'<div class="empty">暂无紧急事项</div>'}
+    <div class="addrow"><input class="inp" placeholder="+ 新增紧急待办" data-act="addTodo" data-list="urgent"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-t"><h3>常规待办</h3><span class="act">${rou.length}/${w.routine.length}</span></div>
+    ${w.routine.length?w.routine.map(t=>`
+      <div class="todo ${t.done?'done':''}">
+        <div class="box" data-act="tgTodo" data-list="routine" data-id="${t.id}">
+          <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg></div>
+        <div class="t">${t.t}</div>
+        <button class="del" data-act="delTodo" data-list="routine" data-id="${t.id}">×</button>
+      </div>`).join(''):'<div class="empty">暂无常规待办</div>'}
+    <div class="addrow"><input class="inp" placeholder="+ 新增常规待办" data-act="addTodo" data-list="routine"></div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(180deg,#f5fbff,#fff)">
+    <div class="card-t"><h3>明日预告</h3><span class="act">${shift(TODAY,1).slice(5)}</span></div>
+    <div style="font-size:12px;font-weight:700;color:var(--blue-600);margin:2px 0 6px">康复预约（${w.appt.length}）</div>
+    ${w.appt.length?w.appt.map(t=>`
+      <div class="todo"><span class="tag b" style="flex:none">预约</span><div class="t">${t.t}</div>
+      <button class="del" data-act="delTodo" data-list="appt" data-id="${t.id}">×</button></div>`).join(''):'<div class="empty">暂无预约</div>'}
+    <div class="addrow"><input class="inp" placeholder="+ 明日康复预约（如 15床 9:00 平衡训练）" data-act="addTodo" data-list="appt"></div>
+
+    <div style="font-size:12px;font-weight:700;color:#33a084;margin:14px 0 6px">新增康复评估患者（${w.neweval.length}）</div>
+    ${w.neweval.length?w.neweval.map(t=>`
+      <div class="todo"><span class="tag m" style="flex:none">评估</span><div class="t">${t.t}</div>
+      <button class="del" data-act="delTodo" data-list="neweval" data-id="${t.id}">×</button></div>`).join(''):'<div class="empty">暂无新增评估</div>'}
+    <div class="addrow"><input class="inp" placeholder="+ 新增评估患者（如 21床 张X 脑卒中）" data-act="addTodo" data-list="neweval"></div>
+  </div>`;
+}
+
+/* -------- 每日治疗记录 -------- */
+function vRecords(R){
+  const rs=[...(D.work.records||[])].sort((a,b)=>hm2m(a.s)-hm2m(b.s));
+  const ing=rs.filter(r=>!r.end),fin=rs.filter(r=>r.end);
+  const TH=S.profile.therapy;
+  const beds=D.work.beds;
+  const recBedNow=recBed||(beds[0]&&beds[0].n)||'';
+  const recBedObj=beds.find(b=>b.n===recBedNow);
+  const recPlanTids=new Set((recBedObj&&recBedObj.plan||[]).map(p=>p.tid));
+  const total=inpatientTotal();
+  const pendN=Math.max(0,total-R.finBeds.size);   // 未完成人数
+  const nowM=hm2m(nowHM());
+  // 时间轴 8:00 - 18:00
+  const T0=480,T1=1080,SPAN=T1-T0;
+  let axis='';
+  if(fin.length){
+    const segs=[...fin].sort((a,b)=>hm2m(a.s)-hm2m(b.s));
+    let cursor=T0,html='';
+    segs.forEach(r=>{
+      const s=Math.max(T0,hm2m(r.s)),e=Math.min(T1,hm2m(r.end)||0);
+      if(e<=s)return;
+      if(s>cursor)html+=`<i style="width:${(s-cursor)/SPAN*100}%;background:transparent"></i>`;
+      html+=`<i style="width:${(e-s)/SPAN*100}%;background:${theraItem(r.tid).c}" title="${r.bed}"></i>`;
+      cursor=Math.max(cursor,e);
+    });
+    axis=`<div class="tl">${html}</div><div class="tl-ax"><span>8:00</span><span>11:00</span><span>14:00</span><span>18:00</span></div>`;
+  }
+  const row=r=>{
+    const it=theraItem(r.tid),run=!r.end;
+    const mm=run?durMin(r.s,nowHM()):durMin(r.s,r.end);
+    const plan=run?addMin(r.s,it.d):'';
+    return `<div class="rec ${run?'ing':''}">
+      <span class="dot" style="background:${it.c}"></span>
+      <div class="rc">
+        <b>${r.bed?r.bed+'床 · ':''}${it.n}</b>
+        <small data-act="recEdit" data-id="${r.id}"><u>${r.s} → ${r.end||'进行中'}</u> · ${run?'已 '+mm+' 分 · 预计 '+plan+' 结束':fmtDur(mm)}${r.note?' · '+r.note:''}</small>
+      </div>
+      ${run?`<button class="btn sm" data-act="recStop" data-id="${r.id}">结束</button>`
+           :`<span class="tag m" style="flex:none">完成</span>`}
+      <button class="del" data-act="recDel" data-id="${r.id}">×</button>
+    </div>`;
+  };
+  return `
+  <div class="card" id="cardRec">
+    <div class="card-t"><h3>每日治疗记录</h3>
+      <span class="act">已完成 ${R.finBeds.size} 床 · 即已完成治疗</span></div>
+    <div class="grid3" style="margin-bottom:11px">
+      <div class="stat m"><div class="n">${R.finBeds.size}</div><div class="l">已完成人数</div></div>
+      <div class="stat ${R.ing?'a':'b'}"><div class="n">${R.ing}</div><div class="l">进行中</div></div>
+      <div class="stat ${pendN?'a':'m'}"><div class="n">${pendN}</div><div class="l">未完成人数</div></div>
+    </div>
+    ${axis}
+    ${ing.length?ing.map(row).join(''):''}
+    ${fin.length?fin.map(row).join(''):(ing.length?'':'<div class="empty">还没有治疗记录，下方选好项目点「开始」</div>')}
+
+    <div class="addrow">
+      <select class="inp" style="flex:0 0 92px" id="rcBed" data-act="recBed">
+        ${beds.length?beds.map(b=>`<option value="${b.n}" ${b.n===recBedNow?'selected':''}>${b.n}床</option>`).join(''):'<option value="">先加床号</option>'}
+      </select>
+      <button class="btn sm" data-act="recStart">▶ 开始勾选项</button>
+    </div>
+    <div class="rx-pick ${recPickOpen?'':'collapsed'}">
+      <div class="rx-pick-h" data-act="recPickToggle">
+        <span>勾选治疗项目（可多选 · 点此收起/展开）</span>
+        <span class="chev">${recPickOpen?'▾':'▸'}</span>
+      </div>
+      <div class="rx-grid">
+        ${TH.map(t=>`<label class="rx-opt ${recPlanTids.has(t.id)?'on':''}"><input type="checkbox" value="${t.id}" ${recPlanTids.has(t.id)?'checked':''}><span class="dot" style="background:${t.c}"></span><span class="rx-nm">${t.n}</span><i>${t.d}分</i></label>`).join('')}
+      </div>
+      <div class="rx-foot">${recBedObj?`已关联 ${recBedObj.n}床 周计划 ${recPlanTids.size} 项 · 可手动增删`:'未选择床号，请先在上方选择'}</div>
+    </div>
+    <div class="rec-add">
+      <div class="addrow">
+        <input class="inp" type="date" id="rcDate" value="${TODAY}" style="flex:0 0 138px" title="补录日期（默认今天，可改为任意日期）">
+        <input class="inp" type="time" id="rcS" value="${pad(Math.floor(Math.max(0,nowM-30)/60))}:${pad(Math.max(0,nowM-30)%60)}">
+        <input class="inp" type="time" id="rcE" value="${nowHM()}">
+      </div>
+      <div class="addrow" style="margin-top:6px">
+        <button class="btn ghost sm" data-act="recAdd" style="flex:1">＋ 按时段补录勾选项（记到所选日期）</button>
+      </div>
+    </div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:6px">选择床号后会自动勾选该床「周计划」内的项目，也可手动增删。点「开始」按当前时间同时开始；或选好日期、填起止时间后点「补录」按同一时段批量登记到所选日期（会体现在对应日期的打卡计划表与统计中）。到点（开始+标准时长）自动结束并记录时间，也可手动点「结束」。</div>
+  </div>`;
+}
+
+/* -------- 治疗项目库 -------- */
+function vTherapy(){
+  const TH=S.profile.therapy;
+  const used={};
+  (D.work.records||[]).forEach(r=>{used[r.tid]=(used[r.tid]||0)+1;});
+  return `
+  <div class="card">
+    <div class="card-t"><h3>治疗项目 · 标准时长</h3><span class="act">${TH.length} 项</span></div>
+    <div class="grid2">
+      ${TH.map(t=>`
+        <div class="tp">
+          <span class="dot" style="background:${t.c}"></span>
+          <b data-act="tpName" data-id="${t.id}" title="点名称可修改">${t.n}${used[t.id]?`<span style="color:var(--muted);font-weight:400"> ×${used[t.id]}</span>`:''}</b>
+          <span class="mn" data-act="tpMin" data-id="${t.id}">${t.d}′</span>
+          <button class="del" data-act="tpDel" data-id="${t.id}">×</button>
+        </div>`).join('')}
+    </div>
+    <div class="addrow">
+      <input class="inp" placeholder="+ 新项目名称" id="tpName">
+      <input class="inp" style="flex:0 0 74px" type="number" min="1" step="1" placeholder="分钟" id="tpD" value="30">
+      <button class="btn sm" data-act="tpAdd">添加</button>
+    </div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:6px">点名称可改名、点时长可改（最低 1 分钟）；× 删除。项目会出现在上方记录的勾选项与每床周计划中。</div>
+  </div>`;
+}
+
+/* -------- 信息（患者基本资料 + 打卡计划表） -------- */
+function vInfo(){
+  const beds=D.work.beds;
+  return `
+  <div class="page-head">
+    <div><h1>患者信息</h1></div>
+  </div>
+  ${beds.length?beds.map(b=>vInfoBed(b)).join('')
+    :'<div class="card empty">还没有床号 · 去「工作」分区录入床号后，这里会自动出现每位患者的基本信息</div>'}
+  `;
+}
+function vInfoBed(b){
+  const plan=(b.plan||[]);
+  const days=hospDays(b.admit);
+  const hidden=!!ckHidden[b.id];
+  return `
+  <div class="card" id="info-${b.id}">
+    <div class="card-t"><h3>${b.n}床${esc(b.name)?' · '+esc(b.name):''}</h3>
+      <span class="act" data-act="nav" data-to="work">去设置治疗计划 ›</span></div>
+    <div class="info-grid">
+      <div class="f" style="grid-column:1/-1"><label>床号</label><input class="inp sm bedno" data-act="bedNo" data-id="${b.id}" value="${esc(b.n)}" style="font-weight:700;color:var(--blue-700)"></div>
+      <div class="f"><label>姓名</label><input class="inp sm" data-act="bedName" data-id="${b.id}" value="${esc(b.name||'')}" placeholder="未填"></div>
+      <div class="f"><label>性别</label>
+        <select class="inp sm" data-act="bedGender" data-id="${b.id}">
+          ${['','男','女','其他'].map(g=>`<option value="${g}" ${b.gender===g?'selected':''}>${g||'未填'}</option>`).join('')}
+        </select></div>
+      <div class="f"><label>诊断</label><input class="inp sm" data-act="bedDx" data-id="${b.id}" value="${esc(b.dx||'')}" placeholder="未填"></div>
+      <div class="f"><label>入院时间</label><input type="datetime-local" class="inp sm" data-act="bedAdmit" data-id="${b.id}" value="${toLocalInput(b.admit)}"></div>
+      <div class="f"><label>住院天数</label><div class="ro">${days==='—'?'—':days+' 天'}</div></div>
+    </div>
+    <div class="plan-sec">
+      <div class="plan-sec-h">治疗计划（周计划）</div>
+      ${plan.length?plan.map(p=>{const it=theraItem(p.tid);return `<span class="tpill" style="background:${it.c}1f;color:${it.c};border-color:${it.c}66">${it.n} · ${p.freq}次/周</span>`;}).join('')
+        :'<span class="muted">未设置，去「工作」分区 · 床号清单 点该床「设置治疗」</span>'}
+    </div>
+    <div class="plan-sec">
+      <div class="plan-sec-h">
+        打卡计划表
+        <button class="mini" data-act="ckHide" data-id="${b.id}">${hidden?'展开 ▾':'隐藏 ▴'}</button>
+      </div>
+      ${hidden?'':(plan.length?checkGrid(b):'<span class="muted">设置治疗计划后自动生成</span>')}
+      ${!hidden && ckActive && ckActive.indexOf(b.id+'__')===0 ? ckRemarkPanel(b):''}
+    </div>
+  </div>`;
+}
+function checkGrid(b){
+  const all=monthCols(b);
+  const checks=b.checks||{};
+  const rec=recDoneSet(b);
+  const recMap=recTimeMap(b);
+  const today=TODAY;
+  const chunks=[];for(let i=0;i<all.length;i+=7)chunks.push(all.slice(i,i+7));
+  const head=cols=>`<tr><th class="lk">项目</th>${cols.map(c=>`<th class="${c.k===today?'td':''}"><div class="dh">${c.md}</div><small>${c.wd}</small></th>`).join('')}</tr>`;
+  const rows=cols=>(b.plan||[]).map(p=>{
+    const it=theraItem(p.tid);
+    const auto=cols.filter(c=>rec.has(p.tid+'__'+c.k)).length;
+    return `<tr><td class="lk"><span class="dot" style="background:${it.c}"></span>${it.n}<br><small>${auto}/${p.freq}次</small></td>
+      ${cols.map(c=>{const k=p.tid+'__'+c.k;const ad=rec.has(k);const st=checks[k]||{};const done=ad||st.done;const info=recMap[k];const t=info&&info.s?(info.s+(info.end?'–'+info.end:'')):'';return `<td class="${c.k===today?'td':''}"><button class="ckcell ${done?'on':''} ${ad?'auto':''}" data-act="chk" data-bed="${b.id}" data-tid="${p.tid}" data-date="${c.k}" title="${c.k}${ad?(' · 治疗记录自动'+(t?' '+t:'')):''}">${done?'✓':''}</button>${t?`<small class="cktime">${t}</small>`:''}${done?`<span class="cknote" data-act="ckNote" data-bed="${b.id}" data-tid="${p.tid}" data-date="${c.k}" title="写备注">✎</span>`:''}</td>`;}).join('')}</tr>`;
+  }).join('');
+  return `<div class="ck-wrap">${chunks.map(c=>`<table class="ckt">${head(c)}${rows(c)}</table>`).join('')}</div>
+  <div class="ck-legend">✓ 已完成（蓝=手动勾选 · 绿=治疗记录自动，格下显示起止时间）· 点格可勾选/取消 · ✎ 写备注 · 入院起 40 天，每行 7 天</div>`;
+}
+function ckRemarkPanel(b){
+  const parts=ckActive.split('__');const tid=parts[1],date=parts[2];
+  const it=theraItem(tid);const st=ckGet(b,tid,date);
+  const m=monthCols(b).find(c=>c.k===date);
+  const tm=recTimeMap(b)[tid+'__'+date];
+  const th=(tm&&tm.s)?(tm.s+(tm.end?'–'+tm.end:'')):'';
+  return `<div class="ck-rmk">
+    <div class="ck-rmk-h">${m?m.md:'?'} · ${it.n}${th?(' · '+th):''} · 备注</div>
+    <div class="ck-rmk-row">
+      <input class="inp" data-act="ckRemark" data-bed="${b.id}" data-tid="${tid}" data-date="${date}" value="${esc(st.note||'')}" placeholder="可填写备注（执行情况、反应等）">
+      <button class="btn sm ghost" data-act="ckNoteClose">收起</button>
+    </div>
+  </div>`;
+}
+
+
+function vDischarge(){
+  const list=(D.work.discharged||[]);
+  return `
+  <div class="page-head">
+    <div><h1>出院</h1><div class="sub">已办理出院的患者存档 · 共 ${list.length} 人</div></div>
+  </div>
+  ${list.length?list.slice().reverse().map(d=>`
+    <div class="card" id="dis-${d.id}">
+      <div class="card-t"><h3>${d.n}床${d.name?' · '+esc(d.name):''}</h3>
+        <span class="act" data-act="readmit" data-id="${d.id}">重新入院 ›</span></div>
+      <div class="info-grid">
+        <div class="f"><label>性别</label><div class="ro">${d.gender||'—'}</div></div>
+        <div class="f"><label>诊断</label><div class="ro">${esc(d.dx)||'—'}</div></div>
+        <div class="f"><label>入院时间</label><div class="ro">${fmtDT(d.admit)}</div></div>
+        <div class="f"><label>住院天数</label><div class="ro">${d.hospDays==='—'?'—':d.hospDays+' 天'}</div></div>
+        <div class="f"><label>出院时间</label><div class="ro">${fmtDT(d.dischargeDate)}</div></div>
+      </div>
+      <div class="plan-sec">
+        <div class="plan-sec-h">住院期间治疗计划</div>
+        ${(d.plan||[]).length?d.plan.map(p=>{const it=theraItem(p.tid);return `<span class="tpill" style="background:${it.c}1f;color:${it.c};border-color:${it.c}66">${it.n} · ${p.freq}次/周</span>`;}).join(''):'<span class="muted">无</span>'}
+      </div>
+      <div class="lnk-note"><span data-act="delDischarge" data-id="${d.id}" style="cursor:pointer;color:var(--coral)">彻底删除此出院记录</span></div>
+    </div>`).join('')
+  :'<div class="card empty">还没有办理出院的患者。去「工作」分区 · 床号清单 点床的「出院」即可。</div>'}
+  `;
+}
+
+function vNotes(){
+  const list=(S.notes||[]).slice().sort((a,b)=>(a.date<b.date?1:a.date>b.date?-1:0));
+  return `
+  <div class="page-head">
+    <div><h1>经验 · 心得</h1><div class="sub">记录康复工作中的体会与收获 · 共 ${list.length} 篇</div></div>
+    <button class="add-btn" data-act="noteAdd">＋ 添加</button>
+  </div>
+  ${list.length?list.map(n=>`
+    <div class="card note-card">
+      <div class="card-t">
+        <div class="note-date">${esc(n.date)}</div>
+        <div class="note-acts">
+          <span class="act" data-act="noteEdit" data-id="${n.id}">编辑</span>
+          <span class="act warn" data-act="noteDel" data-id="${n.id}">删除</span>
+        </div>
+      </div>
+      <div class="note-title">${esc(n.title)||'<span class="muted">(无标题)</span>'}</div>
+      ${n.summary?`<div class="note-summary">${esc(n.summary)}</div>`:''}
+      <div class="note-content">${esc(n.content)||'<span class="muted">（无内容）</span>'}</div>
+    </div>`).join('')
+  :'<div class="card empty">还没有记录任何经验 / 心得。点右上角「＋ 添加」写下第一篇。</div>'}
+  `;
+}
+
+/* ================= 学习分区 ================= */
+function vStudy(){
+  if(studyK===null)studyK=TODAY;
+  const k=studyK;
+  const idx=studyDayIndex(k);            // 0 = 基准日
+  const dayNo=idx+1;
+  const sh=studyPick(STUDY.shanghan,k);
+  const me=studyPick(STUDY.meridians,k);
+  const fo=studyPick(STUDY.formulas,k);
+  const isToday=(k===TODAY);
+  const dateLabel=isToday?('今天 · '+k):k;
+  return `
+  <div class="page-head">
+    <div><h1>学习</h1><div class="sub">每日按顺序推送 · 零点自动覆盖 · 第 ${dayNo} 天</div></div>
+  </div>
+  <div class="study-bar">
+    <button class="study-nav" data-act="studyPrev" title="上一天">‹</button>
+    <div class="study-date">${dateLabel}${isToday?'':' <span class="muted">(回顾)</span>'}</div>
+    <button class="study-nav" data-act="studyNext" title="下一天">›</button>
+    ${isToday?'':'<button class="study-today" data-act="studyToday">回到今天</button>'}
+  </div>
+  <div class="card study-card">
+    <div class="card-t"><span class="study-tag sh">伤寒论 · 条文</span><span class="muted">第 ${((idx%STUDY.shanghan.length)+STUDY.shanghan.length)%STUDY.shanghan.length+1}/${STUDY.shanghan.length} 条</span></div>
+    <div class="study-no">条 ${sh.no}</div>
+    <div class="study-body">${esc(sh.t)}</div>
+  </div>
+  <div class="card study-card">
+    <div class="card-t"><span class="study-tag me">十二经脉 · 循行</span><span class="muted">第 ${((idx%STUDY.meridians.length)+STUDY.meridians.length)%STUDY.meridians.length+1}/${STUDY.meridians.length} 经</span></div>
+    <div class="study-no">${esc(me.n)}</div>
+    <div class="study-body">${esc(me.t)}</div>
+  </div>
+  <div class="card study-card">
+    <div class="card-t"><span class="study-tag fo">方剂 · 方解</span><span class="muted">第 ${((idx%STUDY.formulas.length)+STUDY.formulas.length)%STUDY.formulas.length+1}/${STUDY.formulas.length} 方</span></div>
+    <div class="study-no">${esc(fo.n)}</div>
+    <div class="study-comp"><b>组成：</b>${esc(fo.c)}</div>
+    <div class="study-body"><b>方解：</b>${esc(fo.s)}</div>
+  </div>
+  <div class="study-foot">内容按日期顺序轮换，跨天（零点）自动覆盖为下一组；可点 ‹ › 回顾往期。</div>
+  `;
+}
+
+/* ================= 交互 ================= */
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('[data-nav]');
+  if(nav){route=nav.dataset.nav;render();window.scrollTo(0,0);return;}
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act;
+  const W=D.work;
+
+  switch(a){
+    case 'nav': route=el.dataset.to;render();window.scrollTo(0,0);return;
+    case 'ritual': D.ritual[el.dataset.id]=!D.ritual[el.dataset.id];break;
+    case 'burn': D.burn=Math.max(0,(+D.burn||0)+(+el.dataset.v));break;
+
+    /* ---- 信息分区 · 打卡计划表 ---- */
+    case 'ckHide':{ckHidden[el.dataset.id]=!ckHidden[el.dataset.id];render();return;}
+    case 'ckNote':{ckActive=el.dataset.bed+'__'+el.dataset.tid+'__'+el.dataset.date;render();return;}
+    case 'ckNoteClose':{ckActive=null;render();return;}
+    case 'chk':{
+      const b=W.beds.find(x=>x.id===el.dataset.bed);if(!b)return;
+      const key=el.dataset.tid+'__'+el.dataset.date;
+      const ak=el.dataset.bed+'__'+el.dataset.tid+'__'+el.dataset.date;
+      if(recDoneSet(b).has(key)){ckActive=ak;render();return;} // 治疗记录驱动：点开备注即可，不取消
+      b.checks=b.checks||{};
+      const st=b.checks[key]||{done:false,note:''};
+      st.done=!st.done;b.checks[key]=st;
+      if(st.done)ckActive=ak;else if(ckActive===ak)ckActive=null;
+      save();render();return;
+    }
+
+    case 'num':{
+      const f=el.dataset.f;
+      if(f==='total'||f==='done'){jumpTo(f==='total'?'#cardBeds':'#cardRec','该数字已自动关联，请在下方维护');return;}
+      askPrompt('请输入数值',W[f]||0,(v)=>{
+        let n=Math.max(0,parseInt(v)||0);
+        if(f==='unvisited'){const t=inpatientTotal();if(n>t){n=t;toast('未查房不会超过在院 '+t+' 人');}}
+        W[f]=n;save();render();
+      });return;}
+    case 'addBedBtn':{
+      const inp=el.parentElement.querySelector('[data-act="addBed"]');
+      addBeds(inp.value);inp.value='';break;}
+    case 'delBed':{
+      const b=W.beds.find(x=>x.id===el.dataset.id);
+      const cnt=(W.records||[]).filter(r=>String(r.bed||'').trim()===b.n).length;
+      if(cnt){
+        askConfirm(b.n+' 床今天有 '+cnt+' 条治疗记录。\n删除床号后，在院人数会 -1，但记录仍保留。确定删除？', ()=>{ W.beds=W.beds.filter(x=>x.id!==el.dataset.id); save();render(); });
+        return;
+      }
+      W.beds=W.beds.filter(x=>x.id!==el.dataset.id);break;}
+    case 'discharge':{
+      const b=W.beds.find(x=>x.id===el.dataset.id);if(!b)return;
+      askConfirm(b.n+' 床 · '+(b.name||'')+' 办理出院？\n将清除该床在床号清单的信息，并移入「出院」分区存档。', ()=>{
+        const snap={id:b.id,n:b.n,name:b.name||'',gender:b.gender||'',dx:b.dx||'',admit:b.admit||'',plan:b.plan||[],checks:b.checks||{},hospDays:hospDays(b.admit),dischargeDate:new Date().toISOString()};
+        W.discharged=(W.discharged||[]).concat(snap);
+        W.beds=W.beds.filter(x=>x.id!==b.id);
+        save();render();toast(b.n+' 床已办理出院，转入出院存档');
+      });return;}
+    case 'readmit':{
+      const d=(W.discharged||[]).find(x=>x.id===el.dataset.id);if(!d)return;
+      if(W.beds.some(x=>x.id===d.id)){toast('该床已在院');return;}
+      W.beds.push({id:d.id,n:d.n,name:d.name,gender:d.gender,dx:d.dx,admit:d.admit,plan:d.plan||[],checks:d.checks||{}});
+      W.discharged=W.discharged.filter(x=>x.id!==d.id);
+      save();render();toast(d.n+' 床已重新入院');return;}
+    case 'delDischarge':{
+      W.discharged=(W.discharged||[]).filter(x=>x.id!==el.dataset.id);
+      save();render();return;}
+
+    /* ---- 经验 / 心得 ---- */
+    case 'noteAdd': openNoteEditor(null); return;
+    case 'noteEdit': { const n=(S.notes||[]).find(x=>x.id===el.dataset.id); if(n)openNoteEditor(n); return; }
+    case 'noteCancel': closeNoteEditor(); return;
+    case 'noteSave':{
+      const date=$('#noteDate').value||dk();
+      const title=$('#noteTitle').value.trim();
+      const summary=$('#noteSummary').value.trim();
+      const content=$('#noteContent').value.trim();
+      if(!title&&!content){toast('请至少填写标题或内容');return;}
+      S.notes=S.notes||[];
+      if(noteEditId){
+        const n=S.notes.find(x=>x.id===noteEditId);
+        if(n){n.date=date;n.title=title;n.summary=summary;n.content=content;}
+      }else{
+        S.notes.push({id:uid(),date,title,summary,content});
+      }
+      closeNoteEditor();
+      save();render();toast(noteEditId?'已更新经验 / 心得':'已保存经验 / 心得');return;}
+    case 'noteDel':{
+      askConfirm('删除这条经验 / 心得？', ()=>{ S.notes=(S.notes||[]).filter(x=>x.id!==el.dataset.id); save();render(); toast('已删除'); });
+      return;}
+
+    /* ---- 学习分区 ---- */
+    case 'studyPrev':{ if(studyK===null)studyK=TODAY; studyK=shift(studyK,-1); render(); window.scrollTo(0,0); return; }
+    case 'studyNext':{ if(studyK===null)studyK=TODAY; studyK=shift(studyK,1); render(); window.scrollTo(0,0); return; }
+    case 'studyToday':{ studyK=TODAY; render(); window.scrollTo(0,0); return; }
+
+    /* ---- 本地数据备份 ---- */
+    case 'dataExport':{
+      const json=JSON.stringify(S,null,2);
+      const fname='小马甲工作台_备份_'+TODAY+'.json';
+      S.backupAt=dk()+' '+nowHM();
+      save();
+      openBackupModal(json,fname);
+      return;}
+    case 'dataImport':{ $('#impFile').click(); return; }
+    case 'bkClose': $('#backupModal').classList.remove('show'); return;
+    case 'bkCopy':{
+      const ta=$('#bkText');ta.focus();ta.select();
+      let ok=false;
+      try{ ok=document.execCommand('copy'); }catch(e){}
+      try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value); ok=true; } }catch(e){}
+      toast(ok?'已复制全部备份内容，可粘贴保存到备忘录/文件':'复制失败，请长按文本框手动选择复制');
+      return;}
+
+    case 'tgTodo':{
+      const L=W[el.dataset.list],t=L.find(x=>x.id===el.dataset.id);t.done=!t.done;break;}
+    case 'delTodo': W[el.dataset.list]=W[el.dataset.list].filter(x=>x.id!==el.dataset.id);break;
+    case 'clearOver': W.overdue=W.overdue.filter(x=>x.id!==el.dataset.id);toast('已处理，干得漂亮');break;
+
+    /* ---- 治疗记录 ---- */
+    case 'recPickToggle':{
+      recPickOpen=!recPickOpen;
+      const box=el.closest('.rx-pick');
+      if(box)box.classList.toggle('collapsed',!recPickOpen);
+      const ch=box&&box.querySelector('.chev');
+      if(ch)ch.textContent=recPickOpen?'▾':'▸';
+      return;}
+    case 'recStart':{
+      const bed=($('#rcBed').value||'').trim();
+      if(!bed){toast('请先在床号清单添加床号');return;}
+      const ids=[...document.querySelectorAll('.rx-opt input:checked')].map(c=>c.value);
+      if(!ids.length){toast('请勾选至少一个治疗项目');return;}
+      ids.forEach(tid=>W.records.push({id:uid(),bed,tid,s:nowHM(),end:'',note:''}));
+      toast(ids.length+' 项治疗已开始计时');break;}
+    case 'recStop':{
+      const r=W.records.find(x=>x.id===el.dataset.id);
+      r.end=nowHM();
+      toast('用时 '+durMin(r.s,r.end)+' 分钟，完成');break;}
+    case 'recAdd':{
+      const bed=($('#rcBed').value||'').trim();
+      if(!bed){toast('请先在床号清单添加床号');return;}
+      const ids=[...document.querySelectorAll('.rx-opt input:checked')].map(c=>c.value);
+      const s=$('#rcS').value,e=$('#rcE').value;
+      const k=($('#rcDate').value||TODAY).trim();
+      if(!ids.length){toast('请勾选至少一个治疗项目');return;}
+      if(!s||!e){toast('请填写起止时间');return;}
+      const tgt=day(k); // 写入所选日期，而非一律今天
+      ids.forEach(tid=>tgt.work.records.push({id:uid(),bed,tid,s,end:e,note:''}));
+      toast('已补录 '+ids.length+' 项 · '+k+' · 各 '+durMin(s,e)+' 分');break;}
+    case 'recEdit':{
+      const r=W.records.find(x=>x.id===el.dataset.id);
+      askPrompt('开始时间（HH:MM）',r.s,(s)=>{
+        if(s===null)return;
+        const s2=s.trim();
+        askPrompt('结束时间（HH:MM，留空表示进行中）',r.end||'',(e)=>{
+          const e2=(e||'').trim();
+          askPrompt('备注（可留空）',r.note||'',(n)=>{
+            if(s2)r.s=s2;
+            r.end=e2;
+            if(n!==null)r.note=n.trim();
+            save();render();
+          });
+        });
+      });return;}
+    case 'recDel': W.records=W.records.filter(x=>x.id!==el.dataset.id);break;
+
+    /* ---- 数字溯源跳转 ---- */
+    case 'goBeds': jumpTo('#cardBeds','在院总人数 = 床号清单数量');return;
+    case 'goRec':  jumpTo('#cardRec','已完成治疗 = 记录中完成的床位数');return;
+
+    /* ---- 治疗项目库 ---- */
+    case 'tpAdd':{
+      const n=($('#tpName').value||'').trim();
+      if(!n){toast('请输入项目名称');return;}
+      const d=Math.max(1,parseInt($('#tpD').value)||30);
+      const pal=['#48a4dc','#79d5c1','#a7a6f0','#f5b955','#f4826e','#6dbcea','#4bbfa4','#8583e0','#d99424','#2f88c6'];
+      S.profile.therapy.push({id:uid(),n,d,c:pal[S.profile.therapy.length%pal.length]});
+      $('#tpName').value='';break;}
+    case 'tpMin':{
+      const t=S.profile.therapy.find(x=>x.id===el.dataset.id);
+      askPrompt('「'+t.n+'」标准治疗时长（分钟，最低 1）',t.d,(v)=>{if(v===null)return;t.d=Math.max(1,parseInt(v)||t.d);save();render();});return;}
+    case 'tpName':{
+      const t=S.profile.therapy.find(x=>x.id===el.dataset.id);
+      askPrompt('修改项目名称',t.n,(v)=>{if(v===null)return;const n=v.trim();if(n)t.n=n;save();render();});return;}
+    case 'tpDel':{
+      const t=S.profile.therapy.find(x=>x.id===el.dataset.id);
+      if(S.profile.therapy.length<=1){toast('至少保留一个项目');return;}
+      askConfirm('删除项目「'+t.n+'」？已有记录不受影响', ()=>{ S.profile.therapy=S.profile.therapy.filter(x=>x.id!==el.dataset.id); save();render(); });return;}
+
+    /* ---- 每床周治疗计划 ---- */
+    case 'bedInfo': bedInfoOpen = bedInfoOpen===el.dataset.id?null:el.dataset.id; render(); return;
+    case 'bedToggle': bedOpen = bedOpen===el.dataset.id?null:el.dataset.id; render(); return;
+    case 'planAdd':{
+      const b=W.beds.find(x=>x.id===el.dataset.id);
+      b.plan=b.plan||[];
+      const tid=$('#planTid-'+b.id).value, freq=Math.min(7,Math.max(1,parseInt($('#planF-'+b.id).value)||3));
+      const ex=b.plan.find(p=>p.tid===tid);
+      if(ex)ex.freq=freq; else b.plan.push({tid,freq});break;}
+    case 'planDel':{
+      const b=W.beds.find(x=>x.id===el.dataset.id);
+      b.plan=(b.plan||[]).filter(p=>p.tid!==el.dataset.tid);break;}
+    case 'planFreqUp':{
+      const b=W.beds.find(x=>x.id===el.dataset.id);
+      const p=(b.plan||[]).find(p=>p.tid===el.dataset.tid);
+      if(p)p.freq=Math.min(7,p.freq+1);break;}
+    case 'planFreqDown':{
+      const b=W.beds.find(x=>x.id===el.dataset.id);
+      const p=(b.plan||[]).find(p=>p.tid===el.dataset.tid);
+      if(p)p.freq=Math.max(1,p.freq-1);break;}
+
+    default:return;
+  }
+  save();render();
+});
+
+/* 本地数据备份：导入 JSON 文件 */
+const impFile=$('#impFile');
+impFile.addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];
+  if(!f){return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let data;
+    try{data=JSON.parse(reader.result);}catch(err){toast('文件不是有效 JSON');impFile.value='';return;}
+    if(!data||typeof data!=='object'||!data.days){toast('备份文件格式不正确');impFile.value='';return;}
+    askConfirm('导入备份将覆盖当前所有数据，确定继续？',()=>{
+      // 合并 profile 默认值，确保新字段不缺
+      const old=S;
+      S=Object.assign({},data);
+      if(!Array.isArray(S.notes))S.notes=[];
+      if(!S.profile)S.profile=old.profile;
+      if(!S.profile.therapy)S.profile.therapy=old.profile.therapy;
+      if(!S.days)S.days={};
+      studyK=null;bedOpen=null;bedInfoOpen=null;recBed='';ckHidden={};ckActive=null;
+      save();render();toast('已从备份恢复数据');
+    });
+    impFile.value='';
+  };
+  reader.readAsText(f);
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,v=el.value.trim();
+  if(a==='addBed'){addBeds(v);el.value='';save();render();}
+  else if(a==='addTodo'&&v){D.work[el.dataset.list].push({id:uid(),t:v,done:false});el.value='';save();render();}
+  else if(a==='addOver'&&v){
+    const type=$('#ovType').value,d=Math.max(1,parseInt($('#ovDays').value)||1);
+    D.work.overdue.push({id:uid(),t:v,type,d});el.value='';save();render();}
+});
+
+document.addEventListener('change',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.dataset.act==='weight'){
+    const v=parseFloat(el.value);D.weight=isNaN(v)?null:v;save();render();toast('体重已记录');
+  }else if(el.dataset.act==='wTarget'){
+    const v=parseFloat(el.value);if(!isNaN(v))S.profile.wTarget=v;save();render();
+  }else if(el.dataset.act==='recBed'){
+    recBed=el.value;syncRecPlan();
+  }else if(el.dataset.act==='bedNo'){
+    const b=D.work.beds.find(x=>x.id===el.dataset.id);if(!b)return;
+    const newN=el.value.trim();
+    if(!newN){toast('床号不能为空');render();return;}
+    if(D.work.beds.some(x=>x.id!==b.id && x.n===newN)){toast('床号 '+newN+' 已存在');render();return;}
+    const oldN=b.n;
+    if(oldN!==newN){
+      b.n=newN;
+      renameBed(oldN,newN);          // 历史治疗记录的 r.bed 一并跟随
+      if(recBed===oldN)recBed=newN;  // 记录区床号选择跟随
+    }
+    save();render();toast('床号已改为 '+newN+' 床，相关记录已跟随');
+  }else if(el.dataset.act==='bedName'){
+    const b=D.work.beds.find(x=>x.id===el.dataset.id);if(b)b.name=el.value;save();render();
+  }else if(el.dataset.act==='bedDx'){
+    const b=D.work.beds.find(x=>x.id===el.dataset.id);if(b)b.dx=el.value;save();render();
+  }else if(el.dataset.act==='bedGender'){
+    const b=D.work.beds.find(x=>x.id===el.dataset.id);if(b)b.gender=el.value;save();render();
+  }else if(el.dataset.act==='bedAdmit'){
+    const b=D.work.beds.find(x=>x.id===el.dataset.id);if(b)b.admit=el.value?new Date(el.value).toISOString():'';save();render();
+  }else if(el.dataset.act==='ckRemark'){
+    const b=D.work.beds.find(x=>x.id===el.dataset.bed);if(!b)return;
+    b.checks=b.checks||{};
+    const key=el.dataset.tid+'__'+el.dataset.date;
+    const st=b.checks[key]||{done:false,note:''};
+    st.note=el.value;b.checks[key]=st;save();
+  }
+});
+
+/* 改床号：把全窗口治疗记录里 r.bed===oldN 的都改成 newN（记录按床号字符串关联） */
+function renameBed(oldN,newN){
+  Object.keys(S.days||{}).forEach(k=>{
+    const recs=(S.days[k]&&S.days[k].work&&S.days[k].work.records)||[];
+    recs.forEach(r=>{ if(String(r.bed||'').trim()===oldN) r.bed=newN; });
+  });
+}
+
+function addBeds(str){
+  if(!str)return;
+  const now=new Date().toISOString();
+  str.split(/[\s,，、;；]+/).filter(Boolean).forEach(n=>{
+    if(!D.work.beds.some(b=>b.n===n))D.work.beds.push({id:uid(),n,name:'',gender:'',dx:'',admit:now,plan:[],checks:{}});
+  });
+}
+
+/* 选择床号后：只勾选该床周计划内的治疗项目（手动增删由用户直接操作 checkbox） */
+function syncRecPlan(){
+  const beds=D.work.beds;
+  const bn=recBed||(beds[0]&&beds[0].n)||'';
+  const b=beds.find(x=>x.n===bn);
+  const set=new Set((b&&b.plan||[]).map(p=>p.tid));
+  document.querySelectorAll('.rx-opt input').forEach(c=>{c.checked=set.has(c.value);});
+  const foot=document.querySelector('.rx-foot');
+  if(foot)foot.textContent=b?`已关联 ${b.n}床 周计划 ${set.size} 项 · 可手动增删`:'未选择床号，请先在上方选择';
+}
+
+/* 进行中的治疗每 30 秒：到点自动结束 + 刷新计时（不打断输入） */
+setInterval(()=>{
+  // 过零点重置：日期切换时结束上一日仍在进行中的记录，刷新"今日"并整页重绘
+  const nowK=dk();
+  if(nowK!==TODAY){
+    const prev=(S.days[TODAY]&&S.days[TODAY].work.records)||[];
+    let changed=false;
+    prev.forEach(r=>{if(!r.end){r.end='23:59';changed=true;}});
+    TODAY=nowK;D=day();
+    studyK=TODAY; // 学习分区零点自动覆盖为当天内容
+    if(changed)save();
+    render();
+  }
+  if(route!=='work')return;
+  const nowM=hm2m(nowHM());
+  let auto=false;
+  (D.work.records||[]).forEach(r=>{
+    if(!r.end && nowM>=hm2m(r.s)+theraItem(r.tid).d){r.end=nowHM();auto=true;}
+  });
+  if(auto){save();toast('有治疗已到点自动结束并记录时间');}
+  if(!(D.work.records||[]).some(r=>!r.end))return;
+  const t=document.activeElement&&document.activeElement.tagName;
+  if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA')return;
+  render();
+},30000);
+
+/* ===== 兜底：任何异常都显示出来，不再白屏 ===== */
+function fatal(err){
+  const box=document.createElement('div');
+  box.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#fff3f1;border-top:2px solid #f4826e;color:#8a3524;font:12px/1.6 ui-monospace,Consolas,monospace;padding:12px 14px;max-height:45vh;overflow:auto';
+  box.innerHTML='<b style="font-size:13px">页面出错了</b><br>'+String((err&&err.message)||err)+
+    '<div style="margin-top:8px;color:#b06a5c">若内容空白，可清掉本地数据重来（会丢失已记录内容）</div>'+
+    '<button id="fatalReset" style="margin-top:8px;padding:6px 12px;border:0;border-radius:8px;background:#f4826e;color:#fff;font-size:12px">清空数据并重载</button>';
+  document.body.appendChild(box);
+  const b=box.querySelector('#fatalReset');
+  if(b)b.onclick=()=>{try{localStorage.removeItem(KEY);}catch(_){}location.reload();};
+}
+window.addEventListener('error',e=>fatal(e.error||e.message));
+window.addEventListener('unhandledrejection',e=>fatal(e.reason));
+try{ render(); }catch(e){ fatal(e); }
+</script>
+</body>
+</html>
