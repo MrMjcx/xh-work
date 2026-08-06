@@ -1,0 +1,2739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>康复工作台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (window.tailwind) {
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 900: '#14532d' }
+            }
+          }
+        }
+      };
+    }
+  </script>
+  <style>
+/* 康复工作台 — 样式（深绿 + 浅绿医疗风） */
+:root {
+  --green-900: #14532d;
+  --green-700: #15803d;
+  --green-600: #16a34a;
+  --green-500: #22c55e;
+  --green-100: #dcfce7;
+  --green-50: #f0fdf4;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --yellow-bg: #fefce8;
+  --yellow-tx: #854d0e;
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --card: #ffffff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: #f3f6f4;
+  font-size: 15px;
+  line-height: 1.5;
+  padding-bottom: 52px; /* 给固定免责声明留位 */
+}
+a { text-decoration: none; color: inherit; }
+
+/* 布局 */
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 248px; background: var(--green-900); color: #e7f5ec;
+  flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 40;
+}
+.brand { padding: 18px 16px; font-weight: 700; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.nav { padding: 8px; }
+.nav-sep { color: #9fd8b4; font-size: 12px; padding: 12px 10px 4px; letter-spacing: .05em; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+  color: #d7efe0; margin: 2px 0; font-size: 14px; cursor: pointer;
+}
+.nav-item:hover { background: rgba(255,255,255,.08); }
+.nav-item.active { background: var(--green-500); color: #04230f; font-weight: 600; }
+.nav-ico { width: 20px; text-align: center; }
+
+.sidebar-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 35; }
+.sidebar-mask.show { display: block; }
+
+.main { flex: 1; margin-left: 248px; min-width: 0; }
+.topbar {
+  display: none; align-items: center; gap: 12px; padding: 10px 16px;
+  background: var(--green-700); color: #fff; position: sticky; top: 0; z-index: 20;
+}
+.hamburger { font-size: 22px; background: none; border: none; color: #fff; cursor: pointer; }
+.top-title { font-weight: 600; }
+
+.view { padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+/* 页头 */
+.page-head h1 { margin: 0 0 4px; font-size: 22px; color: var(--green-900); }
+.page-head .sub { margin: 0; color: var(--muted); font-size: 13px; }
+.sec-title { margin: 22px 0 10px; font-size: 16px; color: var(--green-700); border-left: 4px solid var(--green-500); padding-left: 8px; }
+.cur-bar { margin: 14px 0; }
+.cur-patient { display: inline-block; background: var(--green-100); color: var(--green-900); padding: 6px 12px; border-radius: 999px; font-size: 13px; }
+.cur-patient.none { background: var(--yellow-bg); color: var(--yellow-tx); }
+
+/* 卡片 */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* 首页模块卡 */
+.mod-card { display: block; transition: transform .12s, box-shadow .12s; border-top: 4px solid var(--green-500); }
+.mod-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
+.mod-emoji { font-size: 26px; }
+.mod-name { font-weight: 700; margin: 6px 0 4px; color: var(--green-900); }
+.mod-desc { font-size: 13px; color: var(--muted); }
+.mod-tip { margin-top: 10px; font-size: 12px; color: var(--green-700); }
+.ext-card { display: block; }
+.ext-ico { font-size: 22px; }
+.ext-name { font-weight: 600; margin: 4px 0; }
+.ext-desc { font-size: 12px; color: var(--muted); }
+
+/* 表单 */
+.form-card h3, .card h3 { margin-top: 0; color: var(--green-900); }
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.form-row label, .card label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; min-width: 120px; }
+input, textarea, select {
+  font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px;
+  background: #fff; color: var(--ink); width: 100%;
+}
+textarea { resize: vertical; }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--green-500); border-color: var(--green-500); }
+
+/* 按钮 */
+.btn { font: inherit; cursor: pointer; border: none; border-radius: 10px; padding: 9px 16px; font-weight: 600; background: var(--green-100); color: var(--green-900); }
+.btn:hover { filter: brightness(.97); }
+.btn-primary { background: var(--green-600); color: #fff; }
+.btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--ink); }
+.btn-danger { background: var(--red-bg); color: var(--red); }
+.btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.row { display: flex; } .row.gap { gap: 10px; flex-wrap: wrap; }
+
+/* 患者卡 */
+.patient-card { display: flex; flex-direction: column; gap: 8px; }
+.pc-top { display: flex; justify-content: space-between; align-items: baseline; }
+.pc-name { font-weight: 700; font-size: 16px; color: var(--green-900); }
+.pc-meta { font-size: 12px; color: var(--muted); }
+.pc-dx { font-size: 13px; color: var(--muted); }
+.pc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* 患者详情 tabs */
+.tabs { display: flex; gap: 6px; margin: 14px 0; border-bottom: 1px solid var(--line); }
+.tab { background: none; border: none; padding: 10px 14px; cursor: pointer; font: inherit; color: var(--muted); border-bottom: 2px solid transparent; }
+.tab.active { color: var(--green-700); border-bottom-color: var(--green-600); font-weight: 600; }
+.tab-panel.hidden, .hidden { display: none; }
+.rec-item { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #fff; }
+.rec-t { font-weight: 600; color: var(--green-900); }
+.rec-s { font-size: 13px; margin: 4px 0; }
+.rec-d { font-size: 13px; color: var(--ink); }
+.rec-time { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.soap-mini .lab { display: inline-block; width: 16px; font-weight: 700; color: var(--green-700); }
+
+/* 快速工作流 */
+.risk-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 10px; background: var(--yellow-bg); }
+.hint-yellow { background: var(--yellow-bg); color: var(--yellow-tx); padding: 10px 12px; border-radius: 9px; font-size: 13px; margin: 10px 0; }
+.hint-red { background: var(--red-bg); color: var(--red); padding: 10px 12px; border-radius: 9px; font-size: 13px; margin: 10px 0; }
+
+/* 模块向导步骤条（移动端横向滚动） */
+.wstep-bar { display: flex; gap: 8px; overflow-x: auto; padding: 6px 0 12px; -webkit-overflow-scrolling: touch; }
+.wstep { flex: 0 0 auto; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font: inherit; cursor: pointer; white-space: nowrap; color: var(--muted); }
+.wstep.active { background: var(--green-600); color: #fff; border-color: var(--green-600); }
+.wstep.active::after { content: " ✅"; }
+.wstep.disabled { opacity: .45; cursor: not-allowed; }
+
+/* 红旗征 */
+.flags { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+@media (max-width: 640px) { .flags { grid-template-columns: 1fr; } }
+.flag { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 13px; cursor: pointer; }
+.flag.on { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+.flag input { width: auto; }
+
+/* 评估列表 */
+.assess-list { display: flex; flex-direction: column; gap: 10px; }
+.assess-row { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.assess-label { font-weight: 600; margin-bottom: 8px; color: var(--green-900); }
+.assess-ctrl { display: flex; flex-direction: column; gap: 8px; }
+
+/* 评估：关节活动度表 */
+.rom-wrap { margin-top: 4px; overflow-x: auto; }
+.rom-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rom-tbl th, .rom-tbl td { border: 1px solid var(--line); padding: 6px 6px; text-align: center; }
+.rom-tbl th { background: var(--green-50); color: var(--green-900); font-weight: 600; }
+.rom-tbl .rom-j { text-align: left; white-space: nowrap; color: var(--ink); }
+.rom-tbl .rom-nr { color: var(--green-700); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rom-tbl .rom-group td { background: var(--green-100); color: var(--green-900); font-weight: 700; text-align: left; letter-spacing: 1px; }
+.rom-in { width: 64px; padding: 6px 4px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; text-align: center; }
+.rom-tip { margin: 6px 2px 0; font-size: 12px; color: var(--muted); }
+
+/* 评估：添加量表评定表 */
+.add-row { background: var(--green-50); border: 1px dashed var(--green-500); }
+.add-ctrl { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sel-scale { flex: 1; min-width: 180px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; background: #fff; }
+
+/* 问题列表 / 目标 */
+.prob-group { margin: 10px 0; }
+.prob-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.prob { display: flex; align-items: center; gap: 6px; background: var(--green-50); border: 1px solid var(--green-100); border-radius: 8px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
+.prob input { width: auto; }
+.tpl-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+.tpl { background: #fff; border: 1px dashed var(--green-500); color: var(--green-700); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+.tpl:hover { background: var(--green-50); }
+
+/* 治疗技术 */
+.tech-list { display: flex; flex-direction: column; gap: 10px; }
+.tech { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.tech-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tech-chk { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.tech-chk input { width: auto; }
+.tech-detail { margin-top: 10px; font-size: 13px; background: var(--green-50); border-radius: 8px; padding: 10px; }
+.tech-detail p { margin: 4px 0; }
+.tech-params { display: flex; gap: 8px; margin-top: 10px; }
+.tech-params input { flex: 1; }
+
+/* SOAP */
+.soap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .soap-grid { grid-template-columns: 1fr; } }
+.soap-box { display: flex; flex-direction: column; gap: 6px; }
+.soap-lab { font-weight: 700; padding: 4px 10px; border-radius: 8px 8px 0 0; color: #fff; width: fit-content; }
+.soap-lab.s { background: #0ea5e9; }
+.soap-lab.o { background: var(--green-600); }
+.soap-lab.a { background: #f59e0b; }
+.soap-lab.p { background: #8b5cf6; }
+.soap-box textarea { border-radius: 0 0 8px 8px; }
+
+/* 量表计算器中心 */
+.search { width: 100%; margin-bottom: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.chip { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip.active { background: var(--green-600); color: #fff; border-color: var(--green-600); }
+.scale-card { display: flex; flex-direction: column; gap: 6px; }
+.sc-name { font-weight: 700; color: var(--green-900); }
+.sc-cat { display: inline-block; align-self: flex-start; background: var(--green-100); color: var(--green-700); font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+.sc-desc { font-size: 12px; color: var(--muted); flex: 1; }
+
+/* 知识库 */
+.kb-card .kb-name { font-weight: 700; color: var(--green-900); margin-bottom: 6px; }
+.kb-cat { background: var(--green-100); color: var(--green-700); font-size: 12px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+.kb-desc { font-size: 13px; color: var(--muted); }
+.kb-tags { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+details { margin-top: 8px; font-size: 13px; }
+summary { cursor: pointer; color: var(--green-700); }
+
+/* 测试题库 */
+.quiz-card { display: flex; flex-direction: column; gap: 8px; }
+.quiz-meta { display: flex; gap: 8px; }
+.q-type { font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+.q-type.unit { background: var(--green-100); color: var(--green-700); }
+.q-type.case { background: #e0f2fe; color: #0369a1; }
+.q-mod { font-size: 12px; color: var(--muted); align-self: center; }
+.quiz-stem { font-weight: 600; }
+.quiz-opts { display: flex; flex-direction: column; gap: 4px; }
+.q-opt { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; padding: 6px; border-radius: 8px; }
+.q-opt:hover { background: var(--green-50); }
+.q-opt input { width: auto; }
+.quiz-fb { font-size: 13px; margin-top: 6px; padding: 10px; border-radius: 8px; background: #f8fafc; }
+.quiz-fb .right { color: var(--green-700); font-weight: 700; }
+.quiz-fb .wrong { color: var(--red); font-weight: 700; }
+
+/* 说明书 */
+.steps { padding-left: 20px; } .steps li { margin: 8px 0; }
+.nav-help { list-style: none; padding: 0; } .nav-help li { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+
+/* 免责声明：固定底部 */
+.disclaimer {
+  position: fixed; left: 248px; right: 0; bottom: 0; z-index: 30;
+  background: var(--red-bg); color: var(--red); font-size: 12.5px; text-align: center;
+  padding: 8px 12px; border-top: 1px solid #fca5a5;
+}
+
+/* 空状态 */
+.empty { color: var(--muted); padding: 20px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
+
+/* Toast */
+.toast-root { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.toast { background: var(--green-900); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; transform: translateY(-8px); transition: all .3s; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.toast.show { opacity: 1; transform: translateY(0); }
+/* 应用内确认 / 提示弹窗 */
+.modal-sm { max-width: 380px; }
+.cf-msg { margin: 0; font-size: 15px; line-height: 1.6; color: var(--ink); white-space: pre-line; }
+
+/* 弹窗 */
+.modal-root { position: fixed; inset: 0; z-index: 50; display: none; pointer-events: auto; }
+.modal-root.show { display: block; }
+/* 关键修复：长量表弹窗从顶部开始、可滚动，关闭按钮与保存按钮始终可达（避免居中导致顶部被推出视口、点不到） */
+.modal-mask { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; box-sizing: border-box; }
+.modal { background: #fff; border-radius: 14px; width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto; margin: 0 auto; -webkit-overflow-scrolling: touch; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: #fff; }
+.modal-head h3 { margin: 0; color: var(--green-900); }
+.modal-head .x { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted); }
+.modal-sub { padding: 8px 16px 0; color: var(--muted); font-size: 13px; margin: 0; }
+.modal-body { padding: 16px; }
+.modal-foot { padding: 16px; border-top: 1px solid var(--line); display: flex; gap: 10px; position: sticky; bottom: 0; background: #fff; }
+.scale-item { padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.si-q { font-weight: 600; margin-bottom: 8px; color: var(--green-900); }
+.si-opts { display: flex; flex-direction: column; gap: 6px; }
+.opt { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; padding: 6px 8px; border-radius: 8px; }
+.opt:hover { background: var(--green-50); }
+.opt input { width: auto; }
+.scale-result { padding: 0 16px 8px; }
+.scale-bind { margin: 0 16px 8px; padding: 10px 12px; background: var(--green-50); border: 1px solid var(--green-200); border-radius: 10px; font-size: 14px; }
+.scale-bind select { margin-left: 6px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--green-300); font-size: 14px; max-width: 60%; }
+.res-box { background: var(--green-50); border: 1px solid var(--green-100); border-radius: 10px; padding: 12px; }
+.res-score { font-weight: 700; color: var(--green-700); }
+.res-level { font-weight: 700; margin: 4px 0; color: var(--green-900); }
+.res-text { font-size: 13px; }
+
+/* 移动端 */
+@media (max-width: 860px) {
+  .sidebar { transform: translateX(-100%); transition: transform .2s; }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .topbar { display: flex; }
+  .disclaimer { left: 0; }
+}
+
+/* ============ AI 智能助手 ============ */
+.btn-ai {
+  background: linear-gradient(135deg, var(--green-700), #0e7a5f);
+  color: #fff; border: 1px solid var(--green-800);
+}
+.btn-ai:hover { background: linear-gradient(135deg, var(--green-800), #0a5f49); }
+.btn-ai:disabled { opacity: .5; cursor: not-allowed; background: #9aa; }
+.ai-card { display: flex; flex-direction: column; gap: 8px; }
+.ai-card-t { font-weight: 700; color: var(--green-900); }
+.ai-card-d { font-size: 13px; color: #555; flex: 1; }
+.ai-card .btn-ai { align-self: flex-start; }
+.ai-out { width: 100%; border: 1px solid var(--green-100); border-radius: 8px; padding: 8px; font-family: inherit; font-size: 13px; }
+.ai-res { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.ai-res-item { border: 1px solid var(--green-100); border-radius: 8px; padding: 10px 12px; background: var(--green-50); }
+.ai-res-item p { font-size: 13px; margin: 4px 0 0; color: #444; }
+.ai-tag { display: inline-block; font-size: 11px; background: var(--green-700); color: #fff; border-radius: 6px; padding: 1px 7px; margin-right: 6px; }
+.ai-pre { white-space: pre-wrap; font-family: inherit; font-size: 13px; line-height: 1.7; margin: 0; color: #222; }
+.ai-body { display: flex; flex-direction: column; gap: 10px; }
+.ai-ta-lab { display: flex; flex-direction: column; font-size: 13px; font-weight: 700; color: var(--green-900); }
+.ai-ta-lab textarea { margin-top: 4px; font-weight: 400; border: 1px solid var(--green-100); border-radius: 8px; padding: 8px; font-family: inherit; font-size: 13px; line-height: 1.6; }
+.modal-lg { max-width: 760px; }
+
+/* ============ 开屏：星空夜景 ============ */
+.splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 24px;
+  background: radial-gradient(125% 85% at 50% 0%, #1b2a4a 0%, #0c1230 45%, #04060f 100%);
+  transition: opacity .6s ease, visibility .6s ease;
+}
+.splash-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.splash-sky { position: absolute; inset: 0; }
+.splash-stars { position: absolute; inset: 0; }
+.splash-star {
+  position: absolute; background: #fff; border-radius: 50%;
+  opacity: .85; box-shadow: 0 0 6px rgba(255,255,255,.7);
+  animation: twinkle 3.2s infinite ease-in-out;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: .25; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+.splash-moon {
+  position: absolute; top: 9%; right: 14%;
+  width: 82px; height: 82px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff7e0, #ffe9a8 60%, #f1cf76);
+  box-shadow: 0 0 46px 10px rgba(255,233,168,.45);
+}
+.splash-moon::after {
+  content: ""; position: absolute; top: 16px; left: 22px;
+  width: 16px; height: 16px; border-radius: 50%; background: rgba(206,168,104,.5);
+  box-shadow: 30px 16px 0 -2px rgba(206,168,104,.4), 12px 42px 0 -4px rgba(206,168,104,.32);
+}
+.splash-shooting {
+  position: absolute; top: 20%; left: -12%;
+  width: 3px; height: 3px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 8px #fff; opacity: 0;
+  animation: shoot 7s infinite ease-in;
+}
+.splash-shooting::after {
+  content: ""; position: absolute; top: 1px; left: 1px;
+  width: 130px; height: 1px; transform: rotate(22deg); transform-origin: left;
+  background: linear-gradient(90deg, rgba(255,255,255,.85), rgba(255,255,255,0));
+}
+@keyframes shoot {
+  0% { opacity: 0; transform: translate(0, 0); }
+  6% { opacity: 1; }
+  18% { opacity: 0; transform: translate(62vw, 20vh); }
+  100% { opacity: 0; transform: translate(62vw, 20vh); }
+}
+.splash-content {
+  position: relative; z-index: 2; text-align: center; max-width: 440px; color: #eaf2ff;
+}
+.splash-date {
+  font-size: 14px; letter-spacing: .12em; color: #a9c2ff; margin-bottom: 16px;
+}
+.splash-greet {
+  font-size: 30px; font-weight: 800; margin: 0 0 16px;
+  background: linear-gradient(90deg, #bfe9ff, #ffffff, #ffe9a8);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.splash-encourage {
+  font-size: 16px; line-height: 1.75; color: #d7e4ff; margin: 0 0 32px; min-height: 3.5em;
+}
+.splash-enter {
+  border: none; cursor: pointer; padding: 14px 42px; border-radius: 999px;
+  font-size: 17px; font-weight: 700; color: #06203a;
+  background: linear-gradient(90deg, #8fe3ff, #bfa6ff);
+  box-shadow: 0 10px 30px rgba(120,160,255,.45);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.splash-enter:active {
+  transform: translateY(2px) scale(.98);
+  box-shadow: 0 6px 18px rgba(120,160,255,.4);
+}
+.splash-foot {
+  margin-top: 24px; font-size: 12px; color: #6f86b8; letter-spacing: .06em;
+}
+
+
+</style>
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand">🩺 康复工作台</div>
+      <nav id="sidebar-nav" class="nav"></nav>
+    </aside>
+    <div id="sidebar-mask" class="sidebar-mask"></div>
+
+    <main class="main">
+      <div class="topbar">
+        <button id="hamburger" class="hamburger" aria-label="菜单">☰</button>
+        <span class="top-title">康复工作台</span>
+      </div>
+      <div id="view" class="view"></div>
+    </main>
+  </div>
+  <div id="toast-root" class="toast-root"></div>
+  <div id="modal-root" class="modal-root"></div>
+
+  <!-- 开屏：星空夜景 -->
+  <div id="splash" class="splash">
+    <div class="splash-sky">
+      <div class="splash-stars" id="splash-stars"></div>
+      <div class="splash-moon"></div>
+      <div class="splash-shooting" id="splash-shooting"></div>
+    </div>
+    <div class="splash-content">
+      <div class="splash-date" id="splash-date"></div>
+      <h1 class="splash-greet" id="splash-greet">嗨，扛腿战士</h1>
+      <p class="splash-encourage" id="splash-encourage"></p>
+      <button class="splash-enter" id="splash-enter" type="button">进入工作台 →</button>
+      <div class="splash-foot">本地数据存储 · 安全私密</div>
+    </div>
+  </div>
+
+  <script>
+/* 量表定义库 (20+ 量表)
+ * 字段说明：
+ *  key        唯一标识
+ *  name       显示名称
+ *  category   分类（对应顶部筛选标签）
+ *  desc       简介
+ *  type       'sum' 求和评分 | 'grade' 等级评定
+ *  items      条目数组
+ *    - q        问题/条目名称
+ *    - options  [{label, score, info}]  score 用于求和；info 用于等级说明
+ *  grade(total)  仅 sum 类型：根据总分返回 {level, text}
+ *  interpret(map) 可选，grade 类型：根据选择返回 {level, text}
+ *  unit       可选，结果单位（如 cm、秒）
+ */
+(function () {
+  const SCALES = [
+    /* ============ ADL ============ */
+    {
+      key: 'barthel',
+      name: 'Barthel 改良指数 (BI)',
+      category: 'ADL',
+      desc: '评定基本日常生活活动能力（进食、转移、行走等），满分 100 分。',
+      type: 'sum',
+      items: [
+        { q: '进食', options: [{ label: '独立', score: 10 }, { label: '需部分帮助', score: 5 }, { label: '完全依赖', score: 0 }] },
+        { q: '洗澡', options: [{ label: '独立', score: 5 }, { label: '依赖', score: 0 }] },
+        { q: '梳洗（洗脸、刷牙、梳头）', options: [{ label: '独立', score: 5 }, { label: '依赖', score: 0 }] },
+        { q: '穿衣', options: [{ label: '独立', score: 10 }, { label: '需部分帮助', score: 5 }, { label: '依赖', score: 0 }] },
+        { q: '控制大便', options: [{ label: '能控制', score: 10 }, { label: '偶尔失禁', score: 5 }, { label: '失禁', score: 0 }] },
+        { q: '控制小便', options: [{ label: '能控制', score: 10 }, { label: '偶尔失禁', score: 5 }, { label: '失禁', score: 0 }] },
+        { q: '如厕', options: [{ label: '独立', score: 10 }, { label: '需部分帮助', score: 5 }, { label: '依赖', score: 0 }] },
+        { q: '床椅转移', options: [{ label: '独立', score: 15 }, { label: '需少量帮助', score: 10 }, { label: '需大量帮助', score: 5 }, { label: '不能', score: 0 }] },
+        { q: '平地行走 45m', options: [{ label: '独立行走', score: 15 }, { label: '需辅助具', score: 10 }, { label: '需轮椅', score: 5 }, { label: '不能', score: 0 }] },
+        { q: '上下楼梯', options: [{ label: '独立', score: 10 }, { label: '需帮助', score: 5 }, { label: '不能', score: 0 }] }
+      ],
+      grade: (t) => t >= 100 ? { level: '独立', text: '完全独立，无需他人帮助。' }
+        : t >= 60 ? { level: '轻度依赖', text: '轻度功能障碍，部分活动需帮助。' }
+        : t >= 40 ? { level: '中度依赖', text: '中度功能障碍，多数活动需帮助。' }
+        : { level: '重度依赖', text: '重度依赖，几乎所有活动均需他人协助。' }
+    },
+    {
+      key: 'katz',
+      name: 'Katz ADL 指数',
+      category: 'ADL',
+      desc: '评估洗澡、穿衣、如厕、转移、控制二便、进食六项功能独立性。',
+      type: 'grade',
+      items: [
+        { q: '洗澡', options: [{ label: '独立', score: 1 }, { label: '依赖', score: 0 }] },
+        { q: '穿衣', options: [{ label: '独立', score: 1 }, { label: '依赖', score: 0 }] },
+        { q: '如厕', options: [{ label: '独立', score: 1 }, { label: '依赖', score: 0 }] },
+        { q: '转移（床椅）', options: [{ label: '独立', score: 1 }, { label: '依赖', score: 0 }] },
+        { q: '控制二便', options: [{ label: '能控制', score: 1 }, { label: '失禁', score: 0 }] },
+        { q: '进食', options: [{ label: '独立', score: 1 }, { label: '依赖', score: 0 }] }
+      ],
+      interpret: (map) => {
+        const dep = Object.values(map).filter(v => v.score === 0).length;
+        return dep === 0 ? { level: 'A 级（独立）', text: '六项全部独立。' }
+          : dep <= 2 ? { level: 'B-C 级（轻中度依赖）', text: '1-2 项依赖，功能轻度受损。' }
+          : { level: 'D-G 级（中重度依赖）', text: '3 项及以上依赖，功能明显受损。' };
+      }
+    },
+
+    /* ============ 平衡 ============ */
+    {
+      key: 'berg',
+      name: 'Berg 平衡量表 (BBS)',
+      category: '平衡',
+      desc: '14 个平衡任务，每项 0-4 分，总分 56 分，评估跌倒风险。',
+      type: 'sum',
+      items: [
+        { q: '坐到站', options: [{ label: '无需手扶独立站起', score: 4 }, { label: '需手扶少量帮助', score: 3 }, { label: '需他人中等帮助', score: 2 }, { label: '需大量帮助', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '独立站立', options: [{ label: '≥2 分钟', score: 4 }, { label: '≥1 分钟', score: 3 }, { label: '≥30 秒', score: 2 }, { label: '≥10 秒', score: 1 }, { label: '<10 秒', score: 0 }] },
+        { q: '无支撑闭目站立', options: [{ label: '≥10 秒', score: 4 }, { label: '≥3 秒', score: 3 }, { label: '≥1 秒', score: 2 }, { label: '不能但稳定', score: 1 }, { label: '不能且失衡', score: 0 }] },
+        { q: '无支撑双脚并拢站立', options: [{ label: '≥1 分钟', score: 4 }, { label: '≥30 秒', score: 3 }, { label: '≥10 秒', score: 2 }, { label: '≥3 秒', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '双臂前伸站立', options: [{ label: '≥2 分钟', score: 4 }, { label: '≥1 分钟', score: 3 }, { label: '≥30 秒', score: 2 }, { label: '≥10 秒', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '从地面拾物', options: [{ label: '轻松完成', score: 4 }, { label: '需帮助但稳定', score: 3 }, { label: '不能独立', score: 2 }, { label: '需大量帮助', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '站立位转身', options: [{ label: '左右均可转身', score: 4 }, { label: '仅一侧转身', score: 3 }, { label: '需监护', score: 2 }, { label: '需帮助', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '原地踏步', options: [{ label: '≥20 秒', score: 4 }, { label: '≥10 秒', score: 3 }, { label: '≥5 秒', score: 2 }, { label: '≥3 秒', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '站到坐', options: [{ label: '控制良好', score: 4 }, { label: '轻微失控', score: 3 }, { label: '需撑扶', score: 2 }, { label: '需帮助坐下', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '转移（床椅）', options: [{ label: '无需手扶', score: 4 }, { label: '需手扶', score: 3 }, { label: '需口头帮助', score: 2 }, { label: '需 1 人帮助', score: 1 }, { label: '需 2 人帮助', score: 0 }] },
+        { q: '闭眼站立（被轻推）', options: [{ label: '稳定', score: 4 }, { label: '轻微晃动', score: 3 }, { label: '需迈步恢复', score: 2 }, { label: '需扶助', score: 1 }, { label: '失衡', score: 0 }] },
+        { q: '转身 360°', options: [{ label: '≤4 秒双侧', score: 4 }, { label: '≤4 秒一侧', score: 3 }, { label: '≥4 秒', score: 2 }, { label: '需帮助', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '交替踏凳', options: [{ label: '≥20 秒', score: 4 }, { label: '≥15 秒', score: 3 }, { label: '≥10 秒', score: 2 }, { label: '需帮助', score: 1 }, { label: '不能', score: 0 }] },
+        { q: '单脚站立', options: [{ label: '≥10 秒', score: 4 }, { label: '≥5 秒', score: 3 }, { label: '≥3 秒', score: 2 }, { label: '≥1 秒', score: 1 }, { label: '不能', score: 0 }] }
+      ],
+      grade: (t) => t >= 41 ? { level: '跌倒风险低', text: '平衡功能较好，跌倒风险低。' }
+        : t >= 21 ? { level: '跌倒风险中', text: '平衡功能中度受损，存在跌倒风险。' }
+        : { level: '跌倒风险高', text: '平衡功能差，跌倒风险高，需密切防护。' }
+    },
+    {
+      key: 'frt',
+      name: '功能性前伸测试 (FRT)',
+      category: '平衡',
+      desc: '站立位尽量前伸上肢，测量手指尖前移距离（cm），评估动态平衡。',
+      type: 'grade',
+      items: [
+        { q: '前伸距离 (cm)', options: [{ label: '≥25 cm', score: 3, info: '动态平衡好' }, { label: '15-24 cm', score: 2, info: '平衡尚可' }, { label: '6-14 cm', score: 1, info: '平衡受限' }, { label: '<6 cm 或失衡', score: 0, info: '平衡差，跌倒风险高' }] }
+      ],
+      interpret: (map) => {
+        const v = Object.values(map)[0];
+        return { level: v.label, text: '功能性前伸 ' + v.label + '：' + v.info + '。' };
+      },
+      unit: 'cm'
+    },
+
+    /* ============ 认知 ============ */
+    {
+      key: 'mmse',
+      name: 'MMSE 简明精神状态检查',
+      category: '认知',
+      desc: '筛查认知功能，满分 30 分，覆盖定向、记忆、注意、语言等。',
+      type: 'sum',
+      items: [
+        { q: '定向力（时间+地点，共 10 分）', options: [{ label: '完全正确 10', score: 10 }, { label: '部分正确 5', score: 5 }, { label: '明显错误 0', score: 0 }] },
+        { q: '即刻记忆（说出 3 个词，3 分）', options: [{ label: '3 个', score: 3 }, { label: '2 个', score: 2 }, { label: '1 个', score: 1 }, { label: '0 个', score: 0 }] },
+        { q: '注意与计算（连续减 7，5 分）', options: [{ label: '5 题正确', score: 5 }, { label: '3-4 题', score: 3 }, { label: '1-2 题', score: 1 }, { label: '0 题', score: 0 }] },
+        { q: '延迟回忆（复述 3 词，3 分）', options: [{ label: '3 个', score: 3 }, { label: '2 个', score: 2 }, { label: '1 个', score: 1 }, { label: '0 个', score: 0 }] },
+        { q: '命名（出示物品命名，2 分）', options: [{ label: '2 个正确', score: 2 }, { label: '1 个', score: 1 }, { label: '0 个', score: 0 }] },
+        { q: '复述（重复语句，1 分）', options: [{ label: '正确', score: 1 }, { label: '错误', score: 0 }] },
+        { q: '三步指令（3 分）', options: [{ label: '3 步完成', score: 3 }, { label: '2 步', score: 2 }, { label: '1 步', score: 1 }, { label: '0 步', score: 0 }] },
+        { q: '阅读并执行（1 分）', options: [{ label: '正确', score: 1 }, { label: '错误', score: 0 }] },
+        { q: '书写（写出句子，1 分）', options: [{ label: '正确', score: 1 }, { label: '错误', score: 0 }] },
+        { q: '视空间（抄画图形，1 分）', options: [{ label: '正确', score: 1 }, { label: '错误', score: 0 }] }
+      ],
+      grade: (t) => t >= 27 ? { level: '正常', text: '认知功能正常范围内。' }
+        : t >= 21 ? { level: '轻度认知障碍', text: '存在轻度认知损害，建议随访。' }
+        : t >= 10 ? { level: '中度认知障碍', text: '中度认知损害，需进一步评估与干预。' }
+        : { level: '重度认知障碍', text: '重度认知损害。' }
+    },
+    {
+      key: 'moca',
+      name: 'MoCA 蒙特利尔认知评估',
+      category: '认知',
+      desc: '敏感性更高的认知筛查，满分 30 分（受教育≤12 年加 1 分）。',
+      type: 'sum',
+      items: [
+        { q: '视空间与执行（连线/立方体/钟表，5 分）', options: [{ label: '5 分', score: 5 }, { label: '3-4 分', score: 3 }, { label: '1-2 分', score: 1 }, { label: '0 分', score: 0 }] },
+        { q: '命名（3 物，3 分）', options: [{ label: '3 分', score: 3 }, { label: '2 分', score: 2 }, { label: '1 分', score: 1 }, { label: '0 分', score: 0 }] },
+        { q: '记忆（延迟回忆，5 分）', options: [{ label: '5 分', score: 5 }, { label: '3-4 分', score: 3 }, { label: '1-2 分', score: 1 }, { label: '0 分', score: 0 }] },
+        { q: '注意（数字广度/警觉/连续减 7，6 分）', options: [{ label: '6 分', score: 6 }, { label: '4-5 分', score: 4 }, { label: '1-3 分', score: 1 }, { label: '0 分', score: 0 }] },
+        { q: '语言（复述/流畅性，3 分）', options: [{ label: '3 分', score: 3 }, { label: '2 分', score: 2 }, { label: '1 分', score: 1 }, { label: '0 分', score: 0 }] },
+        { q: '抽象（2 词相似性，2 分）', options: [{ label: '2 分', score: 2 }, { label: '1 分', score: 1 }, { label: '0 分', score: 0 }] },
+        { q: '延迟回忆/定向（6 分）', options: [{ label: '6 分', score: 6 }, { label: '4-5 分', score: 4 }, { label: '1-3 分', score: 1 }, { label: '0 分', score: 0 }] }
+      ],
+      grade: (t) => t >= 26 ? { level: '正常', text: '认知功能正常。' }
+        : t >= 18 ? { level: '轻度损害', text: '轻度认知损害。' }
+        : { level: '中重度损害', text: '中重度认知损害，建议专科评估。' }
+    },
+
+    /* ============ 肌力 ============ */
+    {
+      key: 'mmt',
+      name: 'Lovett 徒手肌力分级 (MMT)',
+      category: '肌力',
+      desc: '0-5 级徒手肌力评定，适用于单肌群或整体肌力记录。',
+      type: 'grade',
+      items: [
+        { q: '目标肌群肌力', options: [{ label: '5 级 正常', score: 5, info: '能抗最大阻力完成全范围运动' }, { label: '4 级 良好', score: 4, info: '能抗部分阻力完成' }, { label: '3 级 可', score: 3, info: '能抗重力完成全范围，不能抗阻力' }, { label: '2 级 差', score: 2, info: '去重力下可完成全范围' }, { label: '1 级 微弱', score: 1, info: '可触及肌收缩，无关节活动' }, { label: '0 级 零', score: 0, info: '无肌收缩' }] }
+      ],
+      interpret: (map) => {
+        const v = Object.values(map)[0];
+        return { level: v.label, text: v.info + '。' };
+      }
+    },
+
+    /* ============ 肌张力 ============ */
+    {
+      key: 'ashworth',
+      name: '改良 Ashworth 肌张力量表 (MAS)',
+      category: '肌张力',
+      desc: '0-4 级评定被动活动时的肌张力增高程度。',
+      type: 'grade',
+      items: [
+        { q: '肌张力（被动活动阻力）', options: [{ label: '0 无增高', score: 0, info: '肌张力不增高' }, { label: '1 轻度', score: 1, info: '肌张力轻度增高，被动活动有"卡住"感' }, { label: '1+ 稍高', score: 1.5, info: '被动活动中有轻微卡住后放松' }, { label: '2 明显', score: 2, info: '明显增高，但关节活动容易' }, { label: '3 重度', score: 3, info: '被动活动困难' }, { label: '4 僵直', score: 4, info: '受累肢体僵直，不能活动' }] }
+      ],
+      interpret: (map) => {
+        const v = Object.values(map)[0];
+        return { level: v.label, text: v.info + '。' };
+      }
+    },
+
+    /* ============ 运动功能 ============ */
+    {
+      key: 'brunnstrom',
+      name: 'Brunnstrom 分期',
+      category: '运动功能',
+      desc: '偏瘫恢复六阶段（I-VI 期）评定运动模式与分离运动。',
+      type: 'grade',
+      items: [
+        { q: '上肢分期', options: [{ label: 'I 弛缓', score: 1 }, { label: 'II 痉挛出现', score: 2 }, { label: 'III 共同运动', score: 3 }, { label: 'IV 部分分离', score: 4 }, { label: 'V 分离运动', score: 5 }, { label: 'VI 协调', score: 6 }] },
+        { q: '下肢分期', options: [{ label: 'I 弛缓', score: 1 }, { label: 'II 痉挛出现', score: 2 }, { label: 'III 共同运动', score: 3 }, { label: 'IV 部分分离', score: 4 }, { label: 'V 分离运动', score: 5 }, { label: 'VI 协调', score: 6 }] }
+      ],
+      interpret: (map) => {
+        const vals = Object.values(map);
+        return { level: '上肢 ' + vals[0].score + ' 期 / 下肢 ' + vals[1].score + ' 期', text: '分期越低恢复越早，VI 期为接近正常协调。' };
+      }
+    },
+    {
+      key: 'fuglmeyer',
+      name: 'Fugl-Meyer 运动功能 (简化)',
+      category: '运动功能',
+      desc: '简化版上下肢运动功能，满分 100（上肢 66 / 下肢 34）。',
+      type: 'sum',
+      items: [
+        { q: '上肢反射活动（2 项，各 2 分）', options: [{ label: '2/2', score: 4 }, { label: '1/2', score: 2 }, { label: '0/2', score: 0 }] },
+        { q: '上肢协同运动（6 项，各 2 分）', options: [{ label: '12/12', score: 12 }, { label: '6-11', score: 8 }, { label: '1-5', score: 3 }, { label: '0', score: 0 }] },
+        { q: '上肢分离运动（4 项，各 2 分）', options: [{ label: '8/8', score: 8 }, { label: '4-7', score: 5 }, { label: '1-3', score: 2 }, { label: '0', score: 0 }] },
+        { q: '腕手功能（5 项，各 2 分）', options: [{ label: '10/10', score: 10 }, { label: '5-9', score: 6 }, { label: '1-4', score: 2 }, { label: '0', score: 0 }] },
+        { q: '下肢协同运动（4 项，各 2 分）', options: [{ label: '8/8', score: 8 }, { label: '4-7', score: 5 }, { label: '1-3', score: 2 }, { label: '0', score: 0 }] },
+        { q: '下肢分离运动（4 项，各 2 分）', options: [{ label: '8/8', score: 8 }, { label: '4-7', score: 5 }, { label: '1-3', score: 2 }, { label: '0', score: 0 }] },
+        { q: '平衡与协调（5 项，各 2 分）', options: [{ label: '10/10', score: 10 }, { label: '5-9', score: 6 }, { label: '1-4', score: 2 }, { label: '0', score: 0 }] }
+      ],
+      grade: (t) => t >= 85 ? { level: '轻度运动障碍', text: '运动功能保留较好。' }
+        : t >= 50 ? { level: '中度运动障碍', text: '存在明显运动功能障碍。' }
+        : { level: '重度运动障碍', text: '运动功能严重受损。' }
+    },
+    {
+      key: 'gmfm',
+      name: 'GMFM 粗大运动 (简化)',
+      category: '运动功能',
+      desc: '脑瘫儿童粗大运动功能，按卧位/坐位/爬行/站立/行走五区简化评分。',
+      type: 'grade',
+      items: [
+        { q: '卧位与翻身', options: [{ label: '0 不能', score: 0 }, { label: '1 部分', score: 1 }, { label: '2 完全', score: 2 }] },
+        { q: '坐位', options: [{ label: '0 不能', score: 0 }, { label: '1 部分', score: 1 }, { label: '2 完全', score: 2 }] },
+        { q: '爬与跪', options: [{ label: '0 不能', score: 0 }, { label: '1 部分', score: 1 }, { label: '2 完全', score: 2 }] },
+        { q: '站立', options: [{ label: '0 不能', score: 0 }, { label: '1 部分', score: 1 }, { label: '2 完全', score: 2 }] },
+        { q: '走跑跳', options: [{ label: '0 不能', score: 0 }, { label: '1 部分', score: 1 }, { label: '2 完全', score: 2 }] }
+      ],
+      interpret: (map) => {
+        const sum = Object.values(map).reduce((a, b) => a + b.score, 0);
+        const pct = Math.round(sum / 10 * 100);
+        return { level: '达成度 ' + pct + '%', text: '粗大运动目标达成约 ' + pct + '%，可据此制定训练重点。' };
+      }
+    },
+    {
+      key: 'ninehole',
+      name: '9 孔柱测试 (9-HPT)',
+      category: '运动功能',
+      desc: '将 9 根小柱放入孔板再取出，记录完成时间（秒），评定手精细功能。',
+      type: 'grade',
+      items: [
+        { q: '完成时间（秒，单手）', options: [{ label: '≤20 秒', score: 3, info: '手精细功能正常' }, { label: '21-40 秒', score: 2, info: '轻度受损' }, { label: '41-60 秒', score: 1, info: '中度受损' }, { label: '>60 秒或不能', score: 0, info: '明显受损' }] }
+      ],
+      interpret: (map) => ({ level: Object.values(map)[0].label, text: Object.values(map)[0].info + '。' }),
+      unit: '秒'
+    },
+
+    /* ============ 吞咽 ============ */
+    {
+      key: 'kubota',
+      name: '洼田饮水试验',
+      category: '吞咽',
+      desc: '端坐喝 30ml 温水，按呛咳情况分 I-V 级评定吞咽功能。',
+      type: 'grade',
+      items: [
+        { q: '饮水过程', options: [{ label: 'I 级 1 次咽下无呛咳', score: 1 }, { label: 'II 级 2 次咽下无呛咳', score: 2 }, { label: 'III 级 1 次咽下有呛咳', score: 3 }, { label: 'IV 级 2 次咽下有呛咳', score: 4 }, { label: 'V 级 多次呛咳不能咽下', score: 5 }] }
+      ],
+      interpret: (map) => {
+        const v = Object.values(map)[0];
+        const ok = v.score <= 2;
+        return { level: v.label, text: ok ? '吞咽功能基本安全，可经口进食。' : '吞咽功能低下，存在误吸风险，需进一步吞咽评估与调整。' };
+      }
+    },
+    {
+      key: 'guss',
+      name: '标准化吞咽评估 GUSS (简化)',
+      category: '吞咽',
+      desc: '分直接（唾液吞咽）与间接（食物稠度）阶段评分，总分 20。',
+      type: 'sum',
+      items: [
+        { q: '唾液吞咽（3 次，各 3 分）', options: [{ label: '9 分', score: 9 }, { label: '5-8 分', score: 6 }, { label: '1-4 分', score: 3 }, { label: '0 分', score: 0 }] },
+        { q: '半固体食物（最大 5 分）', options: [{ label: '5 分', score: 5 }, { label: '3 分', score: 3 }, { label: '1 分', score: 1 }, { label: '0 分', score: 0 }] },
+        { q: '液体食物（最大 4 分）', options: [{ label: '4 分', score: 4 }, { label: '2 分', score: 2 }, { label: '0 分', score: 0 }] },
+        { q: '固体食物（最大 2 分）', options: [{ label: '2 分', score: 2 }, { label: '1 分', score: 1 }, { label: '0 分', score: 0 }] }
+      ],
+      grade: (t) => t >= 15 ? { level: '吞咽安全', text: '可经口进食，注意监测。' }
+        : t >= 10 ? { level: '需调整', text: '需调整食物质地并监护进食。' }
+        : { level: '高风险', text: '吞咽高风险，建议留置鼻饲或进一步评估。' }
+    },
+
+    /* ============ 步行 ============ */
+    {
+      key: 'tug',
+      name: '计时起立行走测试 (TUG)',
+      category: '步行',
+      desc: '从座椅站起、走 3 米返回坐下，记录时间（秒）。',
+      type: 'grade',
+      items: [
+        { q: '完成时间（秒）', options: [{ label: '≤10 秒', score: 3, info: '正常，跌倒风险低' }, { label: '11-20 秒', score: 2, info: '基本独立，需关注' }, { label: '21-30 秒', score: 1, info: '活动能力受限' }, { label: '>30 秒或需帮助', score: 0, info: '明显障碍，跌倒风险高' }] }
+      ],
+      interpret: (map) => ({ level: Object.values(map)[0].label, text: Object.values(map)[0].info + '。' }),
+      unit: '秒'
+    },
+    {
+      key: 'sixmwt',
+      name: '6 分钟步行试验 (简化)',
+      category: '步行',
+      desc: '6 分钟内平地步行最大距离（米），评估心肺耐力与步行能力。',
+      type: 'grade',
+      items: [
+        { q: '步行距离（米）', options: [{ label: '≥400 m', score: 3, info: '心肺耐力良好' }, { label: '300-399 m', score: 2, info: '轻度下降' }, { label: '150-299 m', score: 1, info: '中度下降' }, { label: '<150 m', score: 0, info: '重度下降' }] }
+      ],
+      interpret: (map) => ({ level: Object.values(map)[0].label, text: Object.values(map)[0].info + '。' }),
+      unit: '米'
+    },
+
+    /* ============ 跌倒风险 ============ */
+    {
+      key: 'morse',
+      name: 'Morse 跌倒风险评估',
+      category: '跌倒风险',
+      desc: '评估跌倒史、诊断、辅助具、静脉治疗、步态与认知，总分 125。',
+      type: 'sum',
+      items: [
+        { q: '近 3 月跌倒史', options: [{ label: '无', score: 0 }, { label: '有', score: 25 }] },
+        { q: '继发诊断（≥2 个）', options: [{ label: '无', score: 0 }, { label: '有', score: 15 }] },
+        { q: '行走辅助', options: [{ label: '无/卧床', score: 0 }, { label: '拐杖/助行器', score: 15 }, { label: '轮椅/平车', score: 30 }] },
+        { q: '静脉输液/肝素帽', options: [{ label: '无', score: 0 }, { label: '有', score: 20 }] },
+        { q: '步态', options: [{ label: '正常/卧床', score: 0 }, { label: '虚弱', score: 10 }, { label: '失衡', score: 20 }] },
+        { q: '认知状态', options: [{ label: '定向正常', score: 0 }, { label: '受损/高估能力', score: 15 }] }
+      ],
+      grade: (t) => t >= 45 ? { level: '高危险', text: '跌倒高危，需采取全面防护措施。' }
+        : t >= 25 ? { level: '中危险', text: '跌倒中危，需常规防护与宣教。' }
+        : { level: '低危险', text: '跌倒低危。' }
+    },
+    {
+      key: 'hendrich',
+      name: 'Hendrich II 跌倒风险',
+      category: '跌倒风险',
+      desc: '含 5 项危险因素与起身测试，总分 ≥5 为高危。',
+      type: 'sum',
+      items: [
+        { q: '意识混乱/定向差', options: [{ label: '无', score: 0 }, { label: '有', score: 4 }] },
+        { q: '抑郁', options: [{ label: '无', score: 0 }, { label: '有', score: 2 }] },
+        { q: '眩晕/平衡失调', options: [{ label: '无', score: 0 }, { label: '有', score: 1 }] },
+        { q: '排尿/排便急迫', options: [{ label: '无', score: 0 }, { label: '有', score: 1 }] },
+        { q: '男性', options: [{ label: '否', score: 0 }, { label: '是', score: 1 }] },
+        { q: '起身测试（无法单脚站立）', options: [{ label: '稳定', score: 0 }, { label: '不稳', score: 1 }] }
+      ],
+      grade: (t) => t >= 5 ? { level: '高危险', text: '跌倒高危，加强监护。' }
+        : { level: '低危险', text: '跌倒低危。' }
+    },
+
+    /* ============ 脑干功能 / 言语 ============ */
+    {
+      key: 'frenchay',
+      name: 'Frenchay 构音障碍评定',
+      category: '脑干功能',
+      desc: '评定反射、呼吸、唇舌软腭等反射活动，分 a-e 级。',
+      type: 'grade',
+      items: [
+        { q: '反射（咳嗽/吞咽）', options: [{ label: 'a 正常', score: 1 }, { label: 'b-e 异常', score: 0 }] },
+        { q: '呼吸（言语呼吸控制）', options: [{ label: 'a 正常', score: 1 }, { label: 'b-e 异常', score: 0 }] },
+        { q: '唇（交替运动/力度）', options: [{ label: 'a 正常', score: 1 }, { label: 'b-e 异常', score: 0 }] },
+        { q: '舌（范围/速度）', options: [{ label: 'a 正常', score: 1 }, { label: 'b-e 异常', score: 0 }] },
+        { q: '软腭（抬高/鼻音）', options: [{ label: 'a 正常', score: 1 }, { label: 'b-e 异常', score: 0 }] }
+      ],
+      interpret: (map) => {
+        const abnormal = Object.values(map).filter(v => v.score === 0).length;
+        return abnormal === 0 ? { level: '构音正常', text: '各结构功能正常。' }
+          : { level: '构音障碍 (' + abnormal + ' 项异常)', text: '存在构音器官功能障碍，需言语训练。' };
+      }
+    },
+    {
+      key: 'grbas',
+      name: '嗓音质量 GRBAS 分级',
+      category: '脑干功能',
+      desc: '主观评估整体嗓音、粗糙、气息、无力、紧张五项，0 正常 / 1-3 异常。',
+      type: 'grade',
+      items: [
+        { q: 'G 整体异常', options: [{ label: '0', score: 0 }, { label: '1 轻', score: 1 }, { label: '2 中', score: 2 }, { label: '3 重', score: 3 }] },
+        { q: 'R 粗糙声', options: [{ label: '0', score: 0 }, { label: '1 轻', score: 1 }, { label: '2 中', score: 2 }, { label: '3 重', score: 3 }] },
+        { q: 'B 气息声', options: [{ label: '0', score: 0 }, { label: '1 轻', score: 1 }, { label: '2 中', score: 2 }, { label: '3 重', score: 3 }] },
+        { q: 'A 无力声', options: [{ label: '0', score: 0 }, { label: '1 轻', score: 1 }, { label: '2 中', score: 2 }, { label: '3 重', score: 3 }] },
+        { q: 'S 紧张声', options: [{ label: '0', score: 0 }, { label: '1 轻', score: 1 }, { label: '2 中', score: 2 }, { label: '3 重', score: 3 }] }
+      ],
+      interpret: (map) => {
+        const vals = Object.values(map);
+        const total = vals.reduce((a, b) => a + b.score, 0);
+        const worst = Math.max(...vals.map(v => v.score));
+        return { level: '总分 ' + total + '（最重 ' + worst + ' 级）', text: worst === 0 ? '嗓音正常。' : '存在嗓音异常，建议嗓音训练或喉科检查。' };
+      }
+    },
+
+    /* ============ 意识 ============ */
+    {
+      key: 'gcs',
+      name: 'Glasgow 昏迷量表 (GCS)',
+      category: '意识',
+      desc: '睁眼(E)、语言(V)、运动(M)三项，总分 3-15 评定意识水平。',
+      type: 'sum',
+      items: [
+        { q: '睁眼反应 E', options: [{ label: '自发睁眼 4', score: 4 }, { label: '呼唤睁眼 3', score: 3 }, { label: '刺痛睁眼 2', score: 2 }, { label: '无 1', score: 1 }] },
+        { q: '语言反应 V', options: [{ label: '回答切题 5', score: 5 }, { label: '答非所问 4', score: 4 }, { label: '错乱 3', score: 3 }, { label: '只能发音 2', score: 2 }, { label: '无 1', score: 1 }] },
+        { q: '运动反应 M', options: [{ label: '遵嘱 6', score: 6 }, { label: '定位痛 5', score: 5 }, { label: '躲避痛 4', score: 4 }, { label: '屈曲 3', score: 3 }, { label: '伸直 2', score: 2 }, { label: '无 1', score: 1 }] }
+      ],
+      grade: (t) => t >= 13 ? { level: '轻度意识障碍', text: '意识障碍轻，需密切观察。' }
+        : t >= 9 ? { level: '中度意识障碍', text: '中度意识障碍。' }
+        : { level: '重度意识障碍', text: '重度意识障碍（或昏迷）。' }
+    },
+    {
+      key: 'rass',
+      name: '镇静程度 RASS',
+      category: '意识',
+      desc: 'ICU 镇静深度评分，+4 fighty ~ -5 不能唤醒。',
+      type: 'grade',
+      items: [
+        { q: '镇静深度', options: [{ label: '+4 有攻击', score: 4 }, { label: '+3 非常躁动', score: 3 }, { label: '+2 躁动', score: 2 }, { label: '0 清醒平静', score: 0 }, { label: '-1 瞌睡', score: -1 }, { label: '-3 仅对指令动', score: -3 }, { label: '-5 不能唤醒', score: -5 }] }
+      ],
+      interpret: (map) => ({ level: Object.values(map)[0].label, text: '目标镇静常维持在 RASS -2 至 0 之间。' })
+    },
+
+    /* ============ 预后 ============ */
+    {
+      key: 'mrs',
+      name: '改良 Rankin 量表 (mRS)',
+      category: '预后',
+      desc: '卒中后神经功能残障程度分级 0-6 级。',
+      type: 'grade',
+      items: [
+        { q: '残障程度', options: [{ label: '0 无症状', score: 0 }, { label: '1 无显著残疾', score: 1 }, { label: '2 轻度残疾', score: 2 }, { label: '3 中度残疾', score: 3 }, { label: '4 中重度残疾', score: 4 }, { label: '5 重度残疾', score: 5 }, { label: '6 死亡', score: 6 }] }
+      ],
+      interpret: (map) => ({ level: Object.values(map)[0].label, text: '0-2 为良好预后，3-5 为依赖，6 为死亡。' })
+    }
+  ];
+
+  // 分类标签（用于筛选）
+  const CATEGORIES = ['ADL', '平衡', '认知', '肌力', '肌张力', '运动功能', '吞咽', '步行', '跌倒风险', '脑干功能', '意识', '预后'];
+
+  window.SCALES = SCALES;
+  window.SCALE_MAP = SCALES.reduce((m, s) => (m[s.key] = s, m), {});
+  window.SCALE_CATEGORIES = CATEGORIES;
+})();
+
+</script>
+  <script>
+/* 治疗技术库
+ * 字段：key 唯一标识，name 名称，modules 适用模块，indications 适应证，
+ *      contraindications 禁忌证，points 操作要点。
+ * 在"计划治疗"步骤中，根据模块与诊断自动推荐，也可手动勾选。
+ */
+(function () {
+  const TREATMENTS = [
+    /* ===== PT 物理治疗 ===== */
+    { key: 'prom', name: '关节活动度训练 (PROM/AROM)', modules: ['pt', 'pediatric', 'geriatric'],
+      indications: '关节活动受限、制动后、肌力不足无法进行主动活动者。',
+      contraindications: '急性炎症、骨折未稳定、关节脱位、骨化性肌炎活动期。',
+      points: 'PROM 由治疗师被动完成全范围、无痛；AROM 鼓励患者主动收缩。每个方向 5-10 次，循序渐进，避免暴力。' },
+    { key: 'maitland', name: 'Maitland 关节松动术', modules: ['pt'],
+      indications: '关节僵硬、活动受限、伴有疼痛的脊柱及四肢小关节功能障碍。',
+      contraindications: '关节不稳、急性损伤、骨质疏松、感染、恶性肿瘤、近期骨折。',
+      points: '按 I-V 级振动/持续牵伸分级，I-II 级镇痛，III-IV 级改善活动度。操作轻柔，观察患者反应，避免诱发暴力。' },
+    { key: 'neurofac', name: '神经促进技术 (Bobath/PNF/Brunnstrom)', modules: ['pt', 'pediatric'],
+      indications: '中枢神经损伤后运动控制障碍、痉挛、分离运动不足。',
+      contraindications: '严重痉挛未控制、病情加重期、严重认知障碍无法配合。',
+      points: '利用关键点为抑制痉挛、促进正常模式；PNF 采用对角线螺旋模式与节律启动。强调重复与反馈。' },
+    { key: 'strength', name: '肌力训练', modules: ['pt', 'pediatric', 'geriatric'],
+      indications: '肌力下降（MMT 2-4 级）、废用性萎缩、运动功能恢复阶段。',
+      contraindications: '急性心肌损伤、严重疼痛、关节不稳定、未控制的高血压。',
+      points: '按 3-5 级选择抗阻/抗重力方式，渐进性抗阻；以不诱发疼痛与疲劳为度，2-3 组/日。' },
+    { key: 'balance', name: '平衡训练', modules: ['pt', 'geriatric'],
+      indications: '平衡受损、跌倒风险（Berg/TUG 异常）、前庭或本体感觉障碍。',
+      contraindications: '严重眩晕急性期、未控制的体位性低血压。',
+      points: '由坐到站、静态到动态、支持面由大到小；配合重心转移与干扰训练，全程防护。' },
+    { key: 'gait', name: '步态训练', modules: ['pt', 'geriatric'],
+      indications: '步行能力受损、偏瘫步态、下肢无力、TUG 延长。',
+      contraindications: '下肢承重禁忌、严重平衡障碍未控制。',
+      points: '先减重支持或助行器辅助，纠正异常步态模式；逐步增加步长、步速与耐力。' },
+    { key: 'stretch', name: '牵伸技术', modules: ['pt'],
+      indications: '肌张力增高（Ashworth 2 级以上）、软组织挛缩、关节活动受限。',
+      contraindications: '关节急性炎症、骨化性肌炎、骨折未愈合。',
+      points: '静态牵伸维持 15-30 秒，重复 3-5 次；痉挛肌群为主，避免快速弹震式。' },
+    { key: 'modality', name: '物理因子治疗 (电/热/光疗)', modules: ['pt'],
+      indications: '疼痛、炎症、水肿、软组织损伤、神经肌肉刺激。',
+      contraindications: '装有起搏器、恶性肿瘤、出血倾向、感觉缺失区慎用热疗。',
+      points: '按设备参数设定强度与时间，治疗区域皮肤完整，治疗中观察患者耐受。' },
+
+    /* ===== OT 作业治疗 ===== */
+    { key: 'adl', name: '作业活动训练 (ADL)', modules: ['ot', 'geriatric'],
+      indications: '日常生活活动依赖（Barthel/Katz 下降）、上肢功能障碍。',
+      contraindications: '病情不稳定、严重认知障碍无法配合。',
+      points: '以穿衣、进食、洗漱等真实任务为导向，必要时采用代偿策略与辅助器具。' },
+    { key: 'upperlimb', name: '上肢功能训练', modules: ['ot', 'pediatric'],
+      indications: '上肢运动控制差、肩手综合征、偏瘫上肢功能障碍。',
+      contraindications: '肩关节不稳定、急性肩痛期。',
+      points: '任务导向性训练结合重复性任务，强调双侧与功能性使用。' },
+    { key: 'cognition', name: '认知训练', modules: ['ot', 'geriatric'],
+      indications: 'MMSE/MoCA 异常、注意力/记忆/执行功能下降。',
+      contraindications: '意识不清、严重精神症状。',
+      points: '分层次进行注意力、记忆、解决问题训练，结合日常情境。' },
+    { key: 'sensory', name: '感觉再训练', modules: ['ot'],
+      indications: '偏身感觉障碍、手部感觉减退。',
+      contraindications: '感觉过敏急性期。',
+      points: '由粗到细、由保护觉到辨别觉，重复刺激并引导注意。' },
+    { key: 'assistive', name: '辅助器具应用', modules: ['ot', 'geriatric'],
+      indications: '功能受限需代偿、ADL 依赖。',
+      contraindications: '无绝对禁忌，需适配评估。',
+      points: '据功能缺损选配支具、长柄取物器、防滑垫等，并训练使用。' },
+    { key: 'fine', name: '手精细功能训练', modules: ['ot', 'pediatric'],
+      indications: '手精细动作差（9 孔柱异常）、协调障碍。',
+      contraindications: '急性手部损伤。',
+      points: '插孔、捏取、扭转等任务，逐步提升难度与速度。' },
+
+    /* ===== ST 言语治疗 ===== */
+    { key: 'swallow', name: '吞咽功能训练', modules: ['st'],
+      indications: '洼田饮水试验 II 级以上、误吸风险、吞咽启动延迟。',
+      contraindications: '严重误吸且未建立安全进食途径、意识不清。',
+      points: '包括门德尔松手法、声门上吞咽、冷刺激；调整食物质地与一口量，全程监护。' },
+    { key: 'artic', name: '构音训练', modules: ['st'],
+      indications: 'Frenchay 异常、构音不清、运动性构音障碍。',
+      contraindications: '无绝对禁忌。',
+      points: '放松训练、呼吸控制、构音器官运动与语音练习结合。' },
+    { key: 'voice', name: '呼吸与发声训练', modules: ['st'],
+      indications: 'GRBAS 异常、气息声、声带无力。',
+      contraindications: '急性喉炎、严重肺气肿。',
+      points: '腹式呼吸、起声训练、音量控制，避免过度用声。' },
+    { key: 'aphasia', name: '失语症训练', modules: ['st'],
+      indications: '语言理解/表达障碍、命名困难。',
+      contraindications: '无绝对禁忌。',
+      points: 'Schuell 刺激法、实用交流训练，结合图文与情境。' },
+
+    /* ===== 儿康 ===== */
+    { key: 'ndt', name: '神经发育疗法 (NDT)', modules: ['pediatric'],
+      indications: '脑瘫、中枢协调障碍、异常姿势张力。',
+      contraindications: '急性疾病期。',
+      points: '通过关键点控制抑制异常模式，促进正常运动发育。' },
+    { key: 'conductive', name: '引导式教育', modules: ['pediatric'],
+      indications: '脑瘫儿童综合功能与社交发展。',
+      contraindications: '无绝对禁忌。',
+      points: '以小组节律性意向活动整合运动、认知与日常生活。' },
+    { key: 'sensoryint', name: '感觉统合训练', modules: ['pediatric'],
+      indications: '感觉处理障碍、注意力与动作协调问题。',
+      contraindications: '无绝对禁忌。',
+      points: '提供前庭、本体、触觉等挑战性活动，循序渐进而有趣味。' },
+
+    /* ===== 老年 ===== */
+    { key: 'fallprev', name: '跌倒预防训练', modules: ['geriatric'],
+      indications: 'Morse/Hendrich 中高危、平衡与步态下降。',
+      contraindications: '病情不稳定。',
+      points: '环境安全评估+平衡步态+下肢肌力+起坐训练，配合宣教。' },
+    { key: 'endurance', name: '有氧耐力训练', modules: ['geriatric', 'pt'],
+      indications: '心肺耐力下降（6MWT 缩短）、活动耐量低。',
+      contraindications: '不稳定心绞痛、严重心肺疾病。',
+      points: '低强度持续活动（步行、踏车），循序渐进，监测心率与症状。' },
+    { key: 'painmgmt', name: '疼痛管理', modules: ['geriatric', 'pt'],
+      indications: '慢性肌肉骨骼疼痛、骨关节炎。',
+      contraindications: '急性炎症、皮肤破损处。',
+      points: '物理因子+运动疗法+宣教，避免长期静卧。' }
+  ];
+
+  window.TREATMENTS = TREATMENTS;
+  window.TREATMENT_MAP = TREATMENTS.reduce((m, t) => (m[t.key] = t, m), {});
+})();
+
+</script>
+  <script>
+/* 测试题库
+ * type: 'unit' 单元测试 | 'case' 案例分析
+ * options: 选项文本数组，answer: 正确选项下标，explain: 解析
+ */
+(function () {
+  const QUESTIONS = [
+    { id: 'q1', type: 'unit', module: 'pt', stem: '改良 Ashworth 量表中，"1+" 级表示？',
+      options: ['肌张力无增高', '轻度增高有卡住感后放松', '明显增高但关节易活动', '被动活动困难'], answer: 1,
+      explain: '1+ 级指被动活动中有轻微的"卡住"感后随即放松，介于 1 级与 2 级之间。' },
+    { id: 'q2', type: 'unit', module: 'pt', stem: 'Berg 平衡量表满分是多少？',
+      options: ['56', '100', '30', '125'], answer: 0,
+      explain: 'Berg 含 14 个条目，每项 0-4 分，总分 56 分。' },
+    { id: 'q3', type: 'unit', module: 'adl', stem: 'Barthel 指数评分 ≤39 分提示？',
+      options: ['完全独立', '轻度依赖', '重度依赖', '中度依赖'], answer: 2,
+      explain: 'Barthel ≥60 轻度依赖，40-59 中度，≤39 重度依赖。' },
+    { id: 'q4', type: 'unit', module: 'st', stem: '洼田饮水试验 V 级表示？',
+      options: ['1 次咽下无呛咳', '2 次咽下无呛咳', '多次呛咳不能咽下', '1 次咽下有呛咳'], answer: 2,
+      explain: 'V 级为多次呛咳不能咽下，吞咽功能最差，误吸风险极高。' },
+    { id: 'q5', type: 'unit', module: 'cog', stem: 'MMSE 总分低于多少分提示认知明显异常（文盲参考线更低）？',
+      options: ['30', '27', '20', '15'], answer: 1,
+      explain: 'MMSE 满分 30，通常 <27 分提示认知功能异常，教育程度低者临界值更低。' },
+    { id: 'q6', type: 'unit', module: 'fall', stem: 'Morse 跌倒风险评估总分 ≥45 分属于？',
+      options: ['低危险', '中危险', '高危险', '无危险'], answer: 2,
+      explain: 'Morse ≥45 为高危，25-44 中危，0-24 低危。' },
+    { id: 'q7', type: 'unit', module: 'pt', stem: '徒手肌力分级 (MMT) 中，能抗重力完成全范围但不能抗阻力，属于？',
+      options: ['2 级', '3 级', '4 级', '5 级'], answer: 1,
+      explain: '3 级为可抗重力完成全关节活动范围，但不能抗阻力。' },
+    { id: 'q8', type: 'unit', module: 'neuro', stem: 'GCS 总分最低为 3，代表？',
+      options: ['清醒', '昏迷', '嗜睡', '去大脑强直'], answer: 1,
+      explain: 'GCS 3 分为睁眼1+语言1+运动1，提示深昏迷。' },
+    { id: 'q9', type: 'case', module: 'pt', stem: '患者男，65 岁，脑梗死后右侧偏瘫 2 周。查体：右上肢 Brunnstrom III 期，右下肢 IV 期，Ashworth 右侧肱二头肌 2 级，Berg 18 分。下列最优先的康复目标方向是？',
+      options: ['立即进行抗阻肌力训练', '改善肌张力与平衡、预防跌倒', '仅卧床休息', '直接步态训练无防护'], answer: 1,
+      explain: 'Berg 18 分提示跌倒高危，Ashworth 2 级提示肌张力明显增高，应优先控制肌张力、平衡训练与防跌倒，而非过早抗阻或负重步行。' },
+    { id: 'q10', type: 'case', module: 'st', stem: '患者女，70 岁，卒中后饮水呛咳，洼田饮水试验 IV 级。下列处理最恰当的是？',
+      options: ['继续普通饮水观察', '进行吞咽功能训练并调整食物质地、监护进食', '立即禁食无需评估', '只做构音训练'], answer: 1,
+      explain: 'IV 级存在明显误吸风险，应先做吞咽训练、调整食物质地与一口量，并在监护下进食，必要时进一步评估。' },
+    { id: 'q11', type: 'case', module: 'geriatric', stem: '老年女性，Morse 评分 55，TUG 35 秒，6MWT 200 米。综合判断最突出的风险是？',
+      options: ['心肺耐力良好', '高跌倒风险伴活动耐量下降', '吞咽障碍', '认知正常'], answer: 1,
+      explain: 'Morse 55 为高危，TUG 35 秒与 6MWT 200 米均提示移动与耐力下降，跌倒风险突出，应优先防跌与耐力训练。' },
+    { id: 'q12', type: 'unit', module: 'pediatric', stem: 'GMFM 主要用于评估？',
+      options: ['成人平衡', '脑瘫儿童粗大运动功能', '吞咽功能', '认知功能'], answer: 1,
+      explain: 'GMFM（粗大运动功能测量）主要用于脑瘫等儿童的粗大运动功能评定。' }
+  ];
+
+  window.QUESTIONS = QUESTIONS;
+})();
+
+</script>
+  <script>
+/* 本地数据层：所有数据保存在浏览器 LocalStorage，不上传任何服务器。
+ * 管理：患者档案、当前选中患者（模块强绑定）、评估记录、目标、治疗计划、SOAP、草稿、学习中心。
+ */
+(function () {
+  const PREFIX = 'rc_';
+  const K = {
+    patients: PREFIX + 'patients',
+    current: PREFIX + 'current_patient',
+    drafts: PREFIX + 'drafts',
+    wrong: PREFIX + 'wrong_questions',
+    notes: PREFIX + 'notes',
+    quiz: PREFIX + 'quiz_progress'
+  };
+
+  function load(key, def) {
+    try {
+      const v = localStorage.getItem(key);
+      return v ? JSON.parse(v) : def;
+    } catch (e) { return def; }
+  }
+  function save(key, val) {
+    localStorage.setItem(key, JSON.stringify(val));
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  /* ---------- 患者 ---------- */
+  function getPatients() { return load(K.patients, []); }
+  function getPatient(id) { return getPatients().find(p => p.id === id) || null; }
+  function addPatient(data) {
+    const list = getPatients();
+    const p = {
+      id: uid(),
+      name: data.name || '未命名',
+      age: data.age || '',
+      gender: data.gender || '',
+      diagnosis: data.diagnosis || '',
+      createdAt: new Date().toISOString(),
+      evaluations: [], goals: [], plan: null, soap: [], notes: ''
+    };
+    list.unshift(p);
+    save(K.patients, list);
+    return p;
+  }
+  function updatePatient(id, patch) {
+    const list = getPatients();
+    const i = list.findIndex(p => p.id === id);
+    if (i < 0) return null;
+    list[i] = Object.assign({}, list[i], patch);
+    save(K.patients, list);
+    return list[i];
+  }
+  function deletePatient(id) {
+    save(K.patients, getPatients().filter(p => p.id !== id));
+    if (getCurrentPatientId() === id) setCurrentPatient(null);
+  }
+
+  /* ---------- 当前选中患者（模块强绑定） ---------- */
+  function getCurrentPatientId() { return load(K.current, null); }
+  function setCurrentPatient(id) { save(K.current, id); }
+  function getCurrentPatient() {
+    const id = getCurrentPatientId();
+    return id ? getPatient(id) : null;
+  }
+
+  /* ---------- 评估记录 ---------- */
+  function addEvaluation(patientId, ev) {
+    const p = getPatient(patientId);
+    if (!p) return null;
+    ev.id = uid();
+    ev.time = new Date().toISOString();
+    p.evaluations.unshift(ev);
+    updatePatient(patientId, { evaluations: p.evaluations });
+    return ev;
+  }
+
+  /* ---------- 目标 ---------- */
+  function addGoal(patientId, goal) {
+    const p = getPatient(patientId);
+    if (!p) return null;
+    goal.id = uid();
+    goal.createdAt = new Date().toISOString();
+    p.goals.unshift(goal);
+    updatePatient(patientId, { goals: p.goals });
+    return goal;
+  }
+
+  /* ---------- 治疗计划 ---------- */
+  function savePlan(patientId, plan) {
+    plan.createdAt = new Date().toISOString();
+    updatePatient(patientId, { plan });
+    return plan;
+  }
+
+  /* ---------- SOAP ---------- */
+  function addSoap(patientId, soap) {
+    const p = getPatient(patientId);
+    if (!p) return null;
+    soap.id = uid();
+    soap.time = new Date().toISOString();
+    p.soap.unshift(soap);
+    updatePatient(patientId, { soap: p.soap });
+    return soap;
+  }
+
+  /* ---------- 草稿（六步工作流自动保存） ---------- */
+  function draftKey(moduleKey, patientId) { return moduleKey + '_' + (patientId || 'none'); }
+  function getDraft(moduleKey, patientId) { return load(K.drafts, {})[draftKey(moduleKey, patientId)] || null; }
+  function saveDraft(moduleKey, patientId, step, data) {
+    const all = load(K.drafts, {});
+    all[draftKey(moduleKey, patientId)] = { step, data, savedAt: new Date().toISOString() };
+    save(K.drafts, all);
+  }
+  function clearDraft(moduleKey, patientId) {
+    const all = load(K.drafts, {});
+    delete all[draftKey(moduleKey, patientId)];
+    save(K.drafts, all);
+  }
+
+  /* ---------- 学习中心 ---------- */
+  function getWrong() { return load(K.wrong, []); }
+  function addWrong(qid) {
+    const w = getWrong();
+    if (!w.includes(qid)) { w.push(qid); save(K.wrong, w); }
+  }
+  function removeWrong(qid) { save(K.wrong, getWrong().filter(x => x !== qid)); }
+
+  function getNotes() { return load(K.notes, ''); }
+  function saveNotes(text) { save(K.notes, text); }
+
+  function getQuizProgress() { return load(K.quiz, { done: 0, correct: 0 }); }
+  function saveQuizProgress(p) { save(K.quiz, p); }
+
+  window.Store = {
+    getPatients, getPatient, addPatient, updatePatient, deletePatient,
+    getCurrentPatientId, setCurrentPatient, getCurrentPatient,
+    addEvaluation, addGoal, savePlan, addSoap,
+    getDraft, saveDraft, clearDraft,
+    getWrong, addWrong, removeWrong, getNotes, saveNotes, getQuizProgress, saveQuizProgress,
+    uid
+  };
+})();
+
+</script>
+  <script>
+/* 康复工作台 — 本地 AI 辅助引擎（离线规则引擎）
+ * 设计理念：AI 负责“拟定初稿”，治疗师负责“审校修订”。
+ * 不依赖网络 / 后端，全部基于已录入的结构化数据（患者档案、量表、治疗库、题库）生成。
+ * 对外暴露 window.AI。
+ */
+(function () {
+  'use strict';
+
+  // 问题 -> SMART 目标模板映射
+  var GOAL_MAP = {
+    '关节活动受限': { s: '2-4 周内患侧主要关节被动+主动活动度各改善 10-15°', l: '1-3 个月内关节活动度恢复至正常范围的 80% 以上' },
+    '肌力下降': { s: '2-4 周内关键肌群徒手肌力（MMT）提升 1 级', l: '1-3 个月内肌力达 3+ 级以上，可抗部分阻力完成活动' },
+    '肌张力异常增高': { s: '2-4 周内改良 Ashworth 分级降低 1 级', l: '1-3 个月内痉挛不再限制功能性活动' },
+    '平衡受损跌倒风险': { s: '2-4 周内 Berg 平衡量表提高 5-8 分', l: '1-3 个月内可独立维持静态/动态平衡，无跌倒事件' },
+    '步态异常': { s: '2-4 周内辅助下步行 10 米', l: '1-3 个月内社区内监护下/独立步行' },
+    '运动控制障碍分离运动不足': { s: '2-4 周内出现选择性分离运动', l: '1-3 个月内可完成协调性任务' },
+    'ADL 依赖': { s: '2-4 周内 Barthel 指数提高 10 分', l: '1-3 个月内 ADL 基本独立' },
+    '心肺耐力下降': { s: '2-4 周内可连续步行 5 分钟不喘', l: '1-3 个月内可耐受 20 分钟连续训练' },
+    '感觉障碍': { s: '2-4 周内可识别深/浅感觉差异', l: '1-3 个月内建立感觉代偿策略' },
+    '体位转移受限': { s: '2-4 周内辅助下完成床椅转移', l: '1-3 个月内独立完成转移' }
+  };
+
+  // 诊断关键词 -> 患者教育要点
+  function eduTips(dx) {
+    dx = (dx || '').toLowerCase();
+    var tips = [];
+    if (dx.indexOf('卒中') >= 0 || dx.indexOf('脑梗') >= 0 || dx.indexOf('偏瘫') >= 0 || dx.indexOf('脑') >= 0)
+      tips.push('按时服药、监测血压血糖；良肢位摆放预防肩手综合征与关节挛缩；每日被动活动患侧。');
+    if (dx.indexOf('骨折') >= 0 || dx.indexOf('关节') >= 0 || dx.indexOf('术后') >= 0 || dx.indexOf('置换') >= 0)
+      tips.push('遵医嘱逐步负重；保护手术/损伤部位，避免扭转与跌倒；冰敷减轻肿胀。');
+    if (dx.indexOf('老年') >= 0 || dx.indexOf('高龄') >= 0 || dx.indexOf('跌倒') >= 0)
+      tips.push('居家防跌倒：浴室防滑垫、夜灯、移除地面杂物；起床“三个半分钟”；穿防滑鞋。');
+    if (dx.indexOf('吞咽') >= 0 || dx.indexOf('呛') >= 0)
+      tips.push('进食保持坐位或半卧位；小口慢咽、确认吞咽后再喂下一口；呛咳明显时暂停并呼叫。');
+    if (dx.indexOf('言语') >= 0 || dx.indexOf('构音') >= 0 || dx.indexOf('失语') >= 0)
+      tips.push('每天进行简短对话与发音练习；借助图片/手势沟通；多鼓励、少纠正，保持耐心。');
+    if (dx.indexOf('儿') >= 0 || dx.indexOf('发育') >= 0 || dx.indexOf('脑瘫') >= 0)
+      tips.push('将训练融入游戏与日常；规律作息；多给予正向反馈与亲子互动。');
+    if (!tips.length) tips.push('遵医嘱完成家庭训练；记录每日完成情况与不适；保持规律作息与营养。');
+    return tips;
+  }
+
+  function evalLines(p) {
+    if (!p.evaluations || !p.evaluations.length) return '（暂无量表评估记录）';
+    return p.evaluations.map(function (ev) {
+      return '· ' + ev.scaleName + '：' + (ev.scoreDisplay || ev.score) + '（' + (ev.level || '') + '）— ' + (ev.interpretation || '');
+    }).join('\n');
+  }
+  function goalText(p) {
+    var g = p.goals && p.goals[0];
+    if (!g) return '（暂无目标记录）';
+    return '主要问题：' + (g.problems || []).join('、') +
+      '\n短期目标：' + (g.shortTerm || '—') +
+      '\n长期目标：' + (g.longTerm || '—');
+  }
+  function planText(p) {
+    if (!p.plan || !p.plan.techniques || !p.plan.techniques.length) return '（暂无治疗计划）';
+    return p.plan.techniques.map(function (t) {
+      return '· ' + t.name + (t.freq ? '（' + t.freq : '') + (t.duration ? ' / ' + t.duration + '）' : '');
+    }).join('\n');
+  }
+
+  var AI = {
+    // 根据已勾选问题 + 评估 + 诊断，建议 SMART 目标
+    goalSuggestions: function (p) {
+      var probs = (p.goals && p.goals[0] && p.goals[0].problems) || [];
+      var short = [], long = [];
+      probs.forEach(function (pr) {
+        if (GOAL_MAP[pr]) { short.push(GOAL_MAP[pr].s); long.push(GOAL_MAP[pr].l); }
+      });
+      // 由评估结果补充提示
+      (p.evaluations || []).forEach(function (ev) {
+        if (ev.scaleKey === 'berg' && /高|中/.test(ev.level || '') && short.indexOf('2-4 周内 Berg 平衡量表提高 5-8 分') < 0)
+          short.push('2-4 周内 Berg 平衡量表提高 5-8 分');
+        if (ev.scaleKey === 'barthel' && /依赖|中度|重度/.test(ev.level || '') && short.indexOf('2-4 周内 Barthel 指数提高 10 分') < 0)
+          short.push('2-4 周内 Barthel 指数提高 10 分');
+      });
+      if (!short.length) { short.push('2-4 周内功能较基线明显改善'); long.push('1-3 个月内生活自理能力显著提升'); }
+      if (!long.length) long.push('1-3 个月内回归家庭/社区自理');
+      return { short: short, long: long };
+    },
+
+    // SOAP 分栏内容（用于“填入 SOAP 各栏”）
+    soapSections: function (p, moduleName) {
+      var name = p.name || '患者';
+      var dx = p.diagnosis || '—';
+      return {
+        s: '【S 主观】' + name + '，' + dx + (moduleName ? '，' + moduleName : '') + '。主诉/既往功能：（由治疗师补充）。',
+        o: '【O 客观】\n' + evalLines(p),
+        a: '【A 评估分析】\n' + goalText(p),
+        p: '【P 治疗计划】\n' + planText(p)
+      };
+    },
+
+    // SOAP 叙述草稿（段落式，便于直接誊写或修订）
+    soapNarrative: function (p, moduleName) {
+      var sec = AI.soapSections(p, moduleName);
+      return [sec.s, sec.o, sec.a, sec.p].join('\n\n');
+    },
+
+    // 康复评估报告摘要（连贯叙述）
+    reportSummary: function (p) {
+      var name = p.name || '患者';
+      var dx = p.diagnosis || '—';
+      var age = p.age || '—';
+      var head = name + '，' + age + '岁，' + p.gender + '，诊断：' + dx + '。';
+      var body = (p.evaluations && p.evaluations.length)
+        ? '本次共完成 ' + p.evaluations.length + ' 项评估：\n' + evalLines(p)
+        : '本次暂无量表评估记录，建议优先完成模块相关核心评估。';
+      var goals = (p.goals && p.goals[0])
+        ? '\n康复目标：短期——' + (p.goals[0].shortTerm || '—') + '；长期——' + (p.goals[0].longTerm || '—') + '。'
+        : '';
+      var plan = (p.plan && p.plan.techniques && p.plan.techniques.length)
+        ? '\n治疗计划：' + planText(p) + '。'
+        : '';
+      return head + '\n' + body + goals + plan +
+        '\n\n（本报告由 AI 基于已录入数据自动生成，仅供学习思维训练，须由治疗师审校修订，不构成医疗建议。）';
+    },
+
+    // 治疗计划说明（带技术要点）
+    planNarrative: function (p) {
+      if (!p.plan || !p.plan.techniques || !p.plan.techniques.length)
+        return '（暂无治疗计划，请先在「计划治疗」步骤勾选技术。）';
+      var T = window.TREATMENT_MAP || {};
+      var lines = p.plan.techniques.map(function (t) {
+        var info = T[t.key] || {};
+        return '· ' + t.name +
+          (t.freq ? '（' + t.freq : '') + (t.duration ? ' / ' + t.duration + '）' : '') +
+          (info.points ? '\n  操作要点：' + info.points : '') +
+          (info.indications ? '\n  适应证：' + info.indications : '');
+      });
+      return '本周治疗计划：\n' + lines.join('\n') +
+        '\n\n（AI 依据诊断与已选技术生成说明，请结合患者实际情况调整参数与安全注意事项。）';
+    },
+
+    // 患者教育材料（通俗版）
+    educationMaterial: function (p) {
+      var name = p.name || '患者';
+      var dx = p.diagnosis || '—';
+      var tips = eduTips(p.diagnosis);
+      var warnings = '⚠️ 出现以下情况请立即停止并联系医生/带教老师：突发剧烈头痛、意识改变、胸痛气短、患肢肿胀疼痛（警惕 DVT）、新发红旗征。';
+      return '【康复健康教育单】' + name + '（' + dx + '）\n\n' +
+        '一、日常注意事项：\n' + tips.map(function (t) { return '· ' + t; }).join('\n') + '\n\n' +
+        '二、家庭训练要点：\n· 按治疗师的频次与时间完成训练，循序渐进、不过度疲劳。\n' +
+        '· 训练前后注意疼痛与耐受度，轻微酸胀正常，剧痛需停止。\n' +
+        '· 记录完成情况，复诊时带给治疗师。\n\n' +
+        '三、危险信号（红旗征）：\n' + warnings + '\n\n' +
+        '（本材料由 AI 自动生成，仅供学习演示，具体医嘱以临床医生为准。）';
+    },
+
+    // 知识问答：基于量表/治疗/题库的关键词检索（本地检索，无需联网）
+    ask: function (query) {
+      var q = (query || '').trim();
+      if (!q) return [];
+      var low = q.toLowerCase();
+      var tokens = low.split(/[\s,，。、；;:：?？!！()（）]+/).filter(function (t) { return t.length >= 2; });
+      function score(text) {
+        if (!text) return 0;
+        var t = text.toLowerCase(); var sc = 0;
+        if (t.indexOf(low) >= 0) sc += 6;
+        tokens.forEach(function (tk) { if (t.indexOf(tk) >= 0) sc += 1; });
+        return sc;
+      }
+      var res = [];
+      (window.SCALES || []).forEach(function (s) {
+        var sc = score(s.name + ' ' + s.desc + ' ' + s.category);
+        if (sc > 0) res.push({ tag: '量表', title: s.name, body: s.desc, _s: sc });
+      });
+      (window.TREATMENTS || []).forEach(function (t) {
+        var sc = score(t.name + ' ' + t.indications + ' ' + t.points);
+        if (sc > 0) res.push({ tag: '治疗', title: t.name, body: t.indications, _s: sc });
+      });
+      (window.QUESTIONS || []).forEach(function (x) {
+        var sc = score(x.stem + ' ' + (x.explain || ''));
+        if (sc > 0) res.push({ tag: '题库', title: x.stem, body: x.explain, _s: sc });
+      });
+      res.sort(function (a, b) { return b._s - a._s; });
+      return res.slice(0, 6).map(function (r) { var o = { tag: r.tag, title: r.title, body: r.body }; return o; });
+    }
+  };
+
+  window.AI = AI;
+})();
+
+</script>
+  <script>
+/* 康复工作台 — 主逻辑
+ * 单页应用，Hash 路由，纯前端 + LocalStorage。
+ */
+(function () {
+  'use strict';
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function fmt(t) {
+    if (!t) return '';
+    const d = new Date(t);
+    if (isNaN(d)) return t;
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function toast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    $('#toast-root').appendChild(t);
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
+  }
+
+  /* ============ 模块定义 ============ */
+  const MODULES = {
+    pt: {
+      key: 'pt', name: 'PT 物理治疗', emoji: '🟢', desc: '运用运动疗法与物理因子改善运动功能、平衡与步行能力。',
+      assessments: [
+        { key: 'rom', label: '关节活动度 ROM（分左右）', type: 'rom' },
+        { key: 'mmt', label: '徒手肌力 MMT', scale: 'mmt' },
+        { key: 'ashworth', label: '改良 Ashworth 肌张力量表', scale: 'ashworth' },
+        { key: 'berg', label: 'Berg 平衡量表', scale: 'berg' }
+      ]
+    },
+    ot: {
+      key: 'ot', name: 'OT 作业治疗', emoji: '🔵', desc: '通过作业活动训练提升日常生活活动与上肢手功能。',
+      assessments: [
+        { key: 'barthel', label: 'Barthel 指数 ADL', scale: 'barthel' },
+        { key: 'rom_u', label: '上肢 ROM 评估', type: 'rom' },
+        { key: 'ashworth_u', label: '改良 Ashworth 上肢肌张力', scale: 'ashworth' },
+        { key: 'ninehole', label: '九孔板测试（手精细功能）', scale: 'ninehole' },
+        { key: 'mmse', label: 'MMSE 认知筛查', scale: 'mmse' }
+      ]
+    },
+    st: {
+      key: 'st', name: 'ST 言语治疗', emoji: '🟣', desc: '针对吞咽、构音、言语与认知交流的评估与训练。',
+      assessments: [
+        { key: 'kubota', label: '洼田饮水试验', scale: 'kubota' },
+        { key: 'oral', label: '口腔运动评估', type: 'note', placeholder: '记录唇舌运动、软腭提升、反射等观察结果' },
+        { key: 'mmse', label: 'MMSE 认知筛查', scale: 'mmse' },
+        { key: 'grbas', label: '嗓音质量 GRBAS 分级', scale: 'grbas' },
+        { key: 'feed', label: '进食功能观察', type: 'note', placeholder: '记录进食体位、一口量、呛咳情况' }
+      ]
+    },
+    pediatric: {
+      key: 'pediatric', name: '儿康 儿童康复', emoji: '🟠', desc: '以发育为导向，改善儿童运动、感觉与认知发育。',
+      assessments: [
+        { key: 'milestone', label: '发育里程碑评估', type: 'note', placeholder: '记录大运动/精细/语言/社交里程碑达成情况' },
+        { key: 'gmfm', label: 'GMFM 粗大运动', scale: 'gmfm' },
+        { key: 'rom', label: 'ROM 关节活动度', type: 'rom' },
+        { key: 'mmt', label: 'MMT 适应性肌力', scale: 'mmt' },
+        { key: 'ashworth', label: '改良 Ashworth 肌张力', scale: 'ashworth' }
+      ]
+    },
+    geriatric: {
+      key: 'geriatric', name: '老年康复', emoji: '🟢', desc: '关注跌倒预防、耐力与功能维持，提升生活质量。',
+      assessments: [
+        { key: 'morse', label: 'Morse 跌倒风险', scale: 'morse' },
+        { key: 'berg', label: 'Berg 平衡量表', scale: 'berg' },
+        { key: 'tug', label: 'TUG 计时起立行走', scale: 'tug' },
+        { key: 'frt', label: '功能性前伸测试', scale: 'frt' }
+      ]
+    }
+  };
+
+  const RED_FLAGS = [
+    { key: 'vital', label: '生命体征不稳定（血压/心率/血氧/体温异常）' },
+    { key: 'dvt', label: '急性 DVT 征象（下肢肿胀、疼痛、Homans 征阳性）' },
+    { key: 'fracture', label: '不稳定骨折 / 脱位' },
+    { key: 'cord', label: '脊髓压迫征象（感觉平面、二便障碍、进行性神经损害）' },
+    { key: 'postop', label: '近期手术后（需卧床 / 医嘱限制）' }
+  ];
+
+  const PROBLEMS = {
+    primary: ['关节活动受限', '肌力下降', '肌张力异常增高', '平衡受损跌倒风险', '步态异常', '运动控制障碍分离运动不足'],
+    secondary: ['ADL 依赖', '心肺耐力下降', '感觉障碍', '体位转移受限']
+  };
+  const SHORT_TEMPLATES = ['2 周内关节活动度改善至 ___°', '2 周内可独立床椅转移', '4 周内 Barthel 评分提高 10 分', '2 周内辅助下步行 10 米', '4 周内 Berg 平衡提高 5 分'];
+  const LONG_TEMPLATES = ['1 个月内 ADL 基本独立', '3 个月内社区内独立步行', '2 个月内基本构音清晰', '3 个月内回归家庭自理', '1 个月内 MMSE 提高 3 分'];
+
+  // 关节活动度（ROM）完整关节清单：n=关节/动作名，nr=成人正常活动度参考范围，g=身体分区
+  const ROM_JOINTS = [
+    { g: '上肢', n: '肩 前屈', nr: '0–180°' },
+    { g: '上肢', n: '肩 后伸', nr: '0–60°' },
+    { g: '上肢', n: '肩 外展', nr: '0–180°' },
+    { g: '上肢', n: '肩 内旋', nr: '0–70°' },
+    { g: '上肢', n: '肩 外旋', nr: '0–90°' },
+    { g: '上肢', n: '肘 屈曲', nr: '0–150°' },
+    { g: '上肢', n: '肘 伸展', nr: '0–0°' },
+    { g: '上肢', n: '前臂 旋前', nr: '0–80°' },
+    { g: '上肢', n: '前臂 旋后', nr: '0–80°' },
+    { g: '上肢', n: '腕 掌屈', nr: '0–80°' },
+    { g: '上肢', n: '腕 背伸', nr: '0–70°' },
+    { g: '上肢', n: '腕 尺偏', nr: '0–30°' },
+    { g: '上肢', n: '腕 桡偏', nr: '0–20°' },
+    { g: '下肢', n: '髋 屈曲', nr: '0–125°' },
+    { g: '下肢', n: '髋 伸展', nr: '0–15°' },
+    { g: '下肢', n: '髋 外展', nr: '0–45°' },
+    { g: '下肢', n: '髋 内收', nr: '0–30°' },
+    { g: '下肢', n: '髋 内旋', nr: '0–45°' },
+    { g: '下肢', n: '髋 外旋', nr: '0–45°' },
+    { g: '下肢', n: '膝 屈曲', nr: '0–135°' },
+    { g: '下肢', n: '膝 伸展', nr: '0–0°' },
+    { g: '下肢', n: '踝 背屈', nr: '0–20°' },
+    { g: '下肢', n: '踝 跖屈', nr: '0–50°' },
+    { g: '下肢', n: '踝 内翻', nr: '0–35°' },
+    { g: '下肢', n: '踝 外翻', nr: '0–15°' },
+    { g: '躯干与脊柱', n: '颈椎 屈曲', nr: '0–45°' },
+    { g: '躯干与脊柱', n: '颈椎 伸展', nr: '0–45°' },
+    { g: '躯干与脊柱', n: '颈椎 侧屈', nr: '0–45°' },
+    { g: '躯干与脊柱', n: '颈椎 旋转', nr: '0–60°' },
+    { g: '躯干与脊柱', n: '腰椎 屈曲', nr: '0–80°' },
+    { g: '躯干与脊柱', n: '腰椎 伸展', nr: '0–30°' },
+    { g: '躯干与脊柱', n: '腰椎 侧屈', nr: '0–35°' },
+    { g: '躯干与脊柱', n: '腰椎 旋转', nr: '0–45°' }
+  ];
+
+  /* ============ 路由 ============ */
+  function router() {
+    const hash = location.hash.replace(/^#\/?/, '') || 'home';
+    const parts = hash.split('/');
+    const route = parts[0];
+    closeSidebarMobile();
+    if (route === 'home') return renderHome();
+    if (route === 'patients') return parts[1] ? renderPatientDetail(parts[1]) : renderPatients();
+    if (route === 'workflow') return renderWorkflow();
+    if (route === 'module') return renderModule(parts[1] || 'pt');
+    if (route === 'scales') return renderScales();
+    if (route === 'ai') return renderAI();
+    if (route === 'kb-scale') return renderScaleKnowledge();
+    if (route === 'kb-treatment') return renderTreatmentKnowledge();
+    if (route === 'quiz') return renderQuiz();
+    if (route === 'learn') return renderLearn();
+    if (route === 'manual') return renderManual();
+    renderHome();
+  }
+
+  /* ============ 侧边栏 ============ */
+  const NAV = [
+    { route: 'home', icon: '🏠', label: '首页' },
+    { route: 'patients', icon: '👥', label: '我的患者' },
+    { route: 'workflow', icon: '📝', label: '快速工作流' },
+    { sep: '专业板块' },
+    { route: 'module/pt', icon: '🟢', label: 'PT 物理治疗' },
+    { route: 'module/ot', icon: '🔵', label: 'OT 作业治疗' },
+    { route: 'module/st', icon: '🟣', label: 'ST 言语治疗' },
+    { route: 'module/pediatric', icon: '🟠', label: '儿康 儿童康复' },
+    { route: 'module/geriatric', icon: '🟢', label: '老年康复' },
+    { sep: '工具中心' },
+    { route: 'scales', icon: '📋', label: '量表计算器中心' },
+    { sep: 'AI 助手' },
+    { route: 'ai', icon: '🤖', label: 'AI 智能助手' },
+    { sep: '资料拓展' },
+    { route: 'kb-scale', icon: '📖', label: '量表与评定知识库' },
+    { route: 'kb-treatment', icon: '🔧', label: '临床治疗知识库' },
+    { route: 'quiz', icon: '📑', label: '测试题库' },
+    { route: 'learn', icon: '📚', label: '我的学习中心' },
+    { route: 'manual', icon: 'ℹ️', label: '使用说明书' }
+  ];
+
+  function renderSidebar() {
+    const cur = location.hash.replace(/^#\/?/, '') || 'home';
+    const items = NAV.map(n => {
+      if (n.sep) return `<div class="nav-sep">${esc(n.sep)}</div>`;
+      const active = cur.startsWith(n.route) ? ' active' : '';
+      return `<a class="nav-item${active}" href="#/${n.route}" data-action="nav"><span class="nav-ico">${n.icon}</span><span>${esc(n.label)}</span></a>`;
+    }).join('');
+    $('#sidebar-nav').innerHTML = items;
+  }
+
+  function openSidebarMobile() { $('#sidebar').classList.add('open'); $('#sidebar-mask').classList.add('show'); }
+  function closeSidebarMobile() { $('#sidebar').classList.remove('open'); $('#sidebar-mask').classList.remove('show'); }
+
+  /* ============ 通用卡片/按钮 ============ */
+  function patientBadge() {
+    const p = Store.getCurrentPatient();
+    if (!p) return `<span class="cur-patient none">未选择患者 · 进入模块前请先选择</span>`;
+    return `<span class="cur-patient">当前患者：<b>${esc(p.name)}</b>（${esc(p.age)}岁·${esc(p.gender)}）</span>`;
+  }
+
+  /* ============ 首页 ============ */
+  function renderHome() {
+    const proMods = ['pt', 'ot', 'st', 'pediatric', 'geriatric'];
+    const modCards = proMods.map(k => {
+      const m = MODULES[k];
+      return `<a class="card mod-card" href="#/module/${k}">
+        <div class="mod-emoji">${m.emoji}</div>
+        <div class="mod-name">${esc(m.name)}</div>
+        <div class="mod-desc">${esc(m.desc)}</div>
+        <div class="mod-tip">先选择患者，再进入模块 →</div>
+      </a>`;
+    }).join('');
+    const extCards = [
+      { route: 'kb-scale', icon: '📖', name: '量表与评定知识库', desc: '了解各量表临床意义与得分解读' },
+      { route: 'kb-treatment', icon: '🔧', name: '临床治疗知识库', desc: '治疗技术适应证 / 禁忌证 / 操作要点' },
+      { route: 'quiz', icon: '📑', name: '测试题库', desc: '单元测试 + 案例分析，自动收集错题' },
+      { route: 'learn', icon: '📚', name: '我的学习中心', desc: '错题本、学习进度与笔记' }
+    ].map(c => `<a class="card ext-card" href="#/${c.route}">
+        <div class="ext-ico">${c.icon}</div>
+        <div class="ext-name">${esc(c.name)}</div>
+        <div class="ext-desc">${esc(c.desc)}</div>
+      </a>`).join('');
+
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>康复工作台</h1><p class="sub">康复专业学生思维训练 · 本地数据安全保存</p></div>
+        <div class="cur-bar">${patientBadge()}</div>
+        <h2 class="sec-title">专业板块</h2>
+        <div class="grid-3">${modCards}</div>
+        <h2 class="sec-title">资料拓展</h2>
+        <div class="grid-4">${extCards}</div>
+      </div>` + disclaimer();
+  }
+
+  /* ============ 我的患者 ============ */
+  function renderPatients() {
+    const list = Store.getPatients();
+    const cards = list.length ? list.map(p => `
+      <div class="card patient-card">
+        <div class="pc-top">
+          <div class="pc-name">${esc(p.name)}</div>
+          <div class="pc-meta">${esc(p.age)} 岁 · ${esc(p.gender)}</div>
+        </div>
+        <div class="pc-dx">诊断：${esc(p.diagnosis) || '—'}</div>
+        <div class="pc-actions">
+          <button class="btn btn-sm" data-action="open-patient" data-id="${p.id}">评估</button>
+          <button class="btn btn-sm btn-ghost" data-action="goto-soap" data-id="${p.id}">SOAP</button>
+          <button class="btn btn-sm btn-ghost" data-action="open-patient" data-id="${p.id}">病历</button>
+          <button class="btn btn-sm btn-danger" data-action="delete-patient" data-id="${p.id}">删除</button>
+        </div>
+      </div>`).join('') : `<div class="empty">还没有患者档案，先在下方新建一个吧。</div>`;
+
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>我的患者</h1><p class="sub">所有档案保存在本机浏览器，不上传服务器</p></div>
+        <div class="card form-card">
+          <h3>新建患者档案</h3>
+          <div class="form-row">
+            <label>姓名<input id="np-name" placeholder="如：张某某"></label>
+            <label>年龄<input id="np-age" type="number" placeholder="如：65"></label>
+            <label>性别<select id="np-gender"><option value="">未填</option><option>男</option><option>女</option></select></label>
+          </div>
+          <label>临床诊断<textarea id="np-dx" rows="2" placeholder="如：脑梗死后右侧偏瘫"></textarea></label>
+          <button class="btn btn-primary" data-action="new-patient">保存档案</button>
+        </div>
+        <h2 class="sec-title">患者列表（${list.length}）</h2>
+        <div class="grid-3">${cards}</div>
+      </div>` + disclaimer();
+
+    $('#view .page').addEventListener('click', onPatientsClick);
+  }
+
+  function onPatientsClick(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const a = btn.dataset.action;
+    if (a === 'new-patient') {
+      const name = $('#np-name').value.trim();
+      if (!name) return toast('请填写姓名');
+      const p = Store.addPatient({ name, age: $('#np-age').value, gender: $('#np-gender').value, diagnosis: $('#np-dx').value.trim() });
+      toast('已保存：' + p.name);
+      renderPatients();
+    } else if (a === 'delete-patient') {
+      const id = btn.dataset.id;
+      confirmDialog({
+        title: '删除患者档案',
+        message: '确认删除该患者及其全部评估 / 目标 / SOAP 记录？此操作不可恢复。',
+        confirmText: '删除',
+        danger: true,
+        onConfirm: () => { Store.deletePatient(id); renderPatients(); toast('已删除该患者档案'); }
+      });
+    } else if (a === 'open-patient') {
+      location.hash = '#/patients/' + btn.dataset.id;
+    } else if (a === 'goto-soap') {
+      Store.setCurrentPatient(btn.dataset.id);
+      location.hash = '#/module/pt';
+    }
+  }
+
+  function renderPatientDetail(id) {
+    const p = Store.getPatient(id);
+    if (!p) { $('#view').innerHTML = `<div class="page"><div class="empty">未找到该患者。</div></div>`; return; }
+    const evals = p.evaluations.length ? p.evaluations.map(ev => `
+      <div class="rec-item"><div class="rec-t">${esc(ev.scaleName)}</div>
+      <div class="rec-s">得分 <b>${esc(ev.scoreDisplay || ev.score)}</b> · ${esc(ev.level || '')}</div>
+      <div class="rec-d">${esc(ev.interpretation || '')}</div>
+      <div class="rec-time">${fmt(ev.time)}</div></div>`).join('') : '<div class="empty">暂无评估记录</div>';
+    const goals = p.goals.length ? p.goals.map(g => `
+      <div class="rec-item"><div class="rec-t">康复目标</div>
+      <div class="rec-d"><b>短期：</b>${esc(g.shortTerm || '—')}<br><b>长期：</b>${esc(g.longTerm || '—')}</div>
+      <div class="rec-time">${fmt(g.createdAt)}</div></div>`).join('') : '<div class="empty">暂无目标记录</div>';
+    const soaps = p.soap.length ? p.soap.map(s => `
+      <div class="rec-item"><div class="rec-t">SOAP 记录${s.moduleKey ? ' · ' + (MODULES[s.moduleKey] ? MODULES[s.moduleKey].name : s.moduleKey) : ''}</div>
+      <div class="rec-d soap-mini"><span class="lab">S</span>${esc(s.s || '—')}<br><span class="lab">O</span>${esc(s.o || '—')}<br><span class="lab">A</span>${esc(s.a || '—')}<br><span class="lab">P</span>${esc(s.p || '—')}</div>
+      <div class="rec-time">${fmt(s.time)}</div></div>`).join('') : '<div class="empty">暂无 SOAP 记录</div>';
+
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>${esc(p.name)} 的档案</h1>
+          <p class="sub">${esc(p.age)} 岁 · ${esc(p.gender)} · 诊断：${esc(p.diagnosis) || '—'}</p></div>
+        <div class="row gap">
+          <button class="btn btn-primary" data-action="set-cur" data-id="${p.id}">设为当前患者并进入工作流</button>
+          <button class="btn btn-ai" data-action="ai-report-detail">🤖 AI 生成评估报告</button>
+          <button class="btn btn-ghost" data-action="back-patients">返回列表</button>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="eval">评估记录 (${p.evaluations.length})</button>
+          <button class="tab" data-tab="goal">目标记录 (${p.goals.length})</button>
+          <button class="tab" data-tab="soap">SOAP 记录 (${p.soap.length})</button>
+        </div>
+        <div class="tab-panel" data-panel="eval">${evals}</div>
+        <div class="tab-panel hidden" data-panel="goal">${goals}</div>
+        <div class="tab-panel hidden" data-panel="soap">${soaps}</div>
+      </div>` + disclaimer();
+
+    $('#view .page').addEventListener('click', (e) => {
+      const t = e.target.closest('[data-tab]');
+      if (t) { $$('.tab', $('#view')).forEach(x => x.classList.toggle('active', x === t)); $$('.tab-panel', $('#view')).forEach(x => x.classList.toggle('hidden', x.dataset.panel !== t.dataset.tab)); return; }
+      const b = e.target.closest('[data-action]');
+      if (!b) return;
+      if (b.dataset.action === 'set-cur') { Store.setCurrentPatient(b.dataset.id); location.hash = '#/module/pt'; }
+      if (b.dataset.action === 'back-patients') { location.hash = '#/patients'; }
+      if (b.dataset.action === 'ai-report-detail') {
+        const txt = window.AI.reportSummary(p);
+        openTextModal('康复评估报告摘要（AI）', `<pre class="ai-pre">${esc(txt)}</pre>`, txt);
+      }
+    });
+  }
+
+  /* ============ 快速工作流 ============ */
+  const KW_MAP = [
+    { keys: ['跌倒', '平衡', '行走不稳', '步态', '头晕'], factor: '跌倒风险', module: 'geriatric' },
+    { keys: ['压疮', '褥疮', '长期卧床', '制动', '卧床'], factor: '压疮风险', module: 'pt' },
+    { keys: ['废用', '萎缩', '肌力下降', '不动', '久卧'], factor: '废用综合征', module: 'pt' },
+    { keys: ['挛缩', '关节受限', '僵硬', '活动受限'], factor: '关节挛缩', module: 'pt' },
+    { keys: ['dvt', '深静脉血栓', '下肢肿胀', '血栓'], factor: 'DVT 风险', module: 'pt' },
+    { keys: ['吞咽', '呛咳', '饮水呛', '误吸', '进食'], factor: '吞咽障碍', module: 'st' },
+    { keys: ['言语', '说话', '构音', '失语', '表达'], factor: '言语障碍', module: 'st' },
+    { keys: ['认知', '痴呆', '记忆', '意识', '定向'], factor: '认知障碍', module: 'ot' },
+    { keys: ['偏瘫', '卒中', '脑梗', '脑瘫', '运动'], factor: '运动功能障碍', module: 'pt' },
+    { keys: ['儿童', '发育', '小儿', '脑瘫患儿'], factor: '发育障碍', module: 'pediatric' },
+    { keys: ['老年', '高龄', '老人'], factor: '老年综合征', module: 'geriatric' },
+    { keys: ['adl', '生活自理', '依赖', '日常活动'], factor: 'ADL 依赖', module: 'ot' },
+    { keys: ['肌张力', '痉挛', '紧张'], factor: '肌张力异常', module: 'pt' },
+    { keys: ['关节', '肩', '膝', '活动度'], factor: '关节活动度受限', module: 'pt' }
+  ];
+
+  function renderWorkflow() {
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>快速工作流</h1><p class="sub">粘贴病历文本，自动匹配风险因素并给出评估方向</p></div>
+        <div class="card">
+          <label>病历 / 主诉文本<textarea id="wf-text" rows="6" placeholder="例：患者男，70 岁，脑梗后右侧偏瘫，长期卧床，饮水呛咳，既往跌倒史……"></textarea></label>
+          <button class="btn btn-primary" data-action="wf-run">分析风险因素</button>
+          <div id="wf-result"></div>
+        </div>
+      </div>` + disclaimer();
+    $('#view .page').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action="wf-run"]');
+      if (!b) return;
+      const text = ($('#wf-text').value || '').toLowerCase();
+      const found = [];
+      KW_MAP.forEach(m => { if (m.keys.some(k => text.includes(k.toLowerCase()))) found.push(m); });
+      const box = $('#wf-result');
+      if (!found.length) { box.innerHTML = `<div class="empty">未识别到明确风险因素，可补充更详细的主诉或诊断。</div>`; return; }
+      box.innerHTML = `<h3>识别到的风险因素</h3>` + found.map(m => `
+        <div class="risk-item"><div><b>${esc(m.factor)}</b></div>
+        <button class="btn btn-sm btn-primary" data-action="wf-goto" data-module="${m.module}">进入 ${MODULES[m.module].name} →</button></div>`).join('')
+        + `<p class="hint-yellow">提示：以上为思维训练参考，最终评估方向需结合临床判断。</p>`;
+      $$('[data-action="wf-goto"]', box).forEach(btn => btn.addEventListener('click', () => {
+        if (!Store.getCurrentPatientId()) {
+          confirmDialog({
+            title: '尚未选择患者',
+            message: '进入模块前需要先选择或新建患者。是否前往患者列表？',
+            confirmText: '前往选择',
+            onConfirm: () => { location.hash = '#/patients'; }
+          });
+          return;
+        }
+        location.hash = '#/module/' + btn.dataset.module;
+      }));
+    });
+  }
+
+  /* ============ 模块六步向导 ============ */
+  let WIZ = null; // 当前向导数据
+  function blankWiz() {
+    return { step: 1, step1: {}, step2: { redflags: [], note: '' }, step3: { romNote: '', notes: {}, rom: {}, extraScales: [] }, step4: { problems: [], shortTerm: '', longTerm: '' }, step5: { techniques: {} }, step6: { s: '', o: '', a: '', p: '' } };
+  }
+
+  function renderModule(key) {
+    const m = MODULES[key] || MODULES.pt;
+    const cur = Store.getCurrentPatient();
+    // 载入草稿
+    const draft = Store.getDraft(key, cur ? cur.id : null);
+    WIZ = draft ? Object.assign(blankWiz(), draft.data) : blankWiz();
+    WIZ.step = draft ? draft.step : 1;
+
+    const steps = [
+      { n: 1, t: '选患者' }, { n: 2, t: '接诊筛查' }, { n: 3, t: '评估' },
+      { n: 4, t: '分析目标' }, { n: 5, t: '计划治疗' }, { n: 6, t: 'SOAP 记录' }
+    ];
+    const tabs = steps.map(s => {
+      const dis = (s.n > 1 && !cur) ? ' disabled' : '';
+      const act = WIZ.step === s.n ? ' active' : '';
+      return `<button class="wstep${act}${dis}" data-action="wstep" data-step="${s.n}">${s.n}. ${s.t}</button>`;
+    }).join('');
+
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>${m.emoji} ${esc(m.name)} · 六步工作流</h1>
+          <p class="sub">${esc(m.desc)}</p></div>
+        <div class="cur-bar">${patientBadge()}</div>
+        <div class="wstep-bar">${tabs}</div>
+        <div id="wstep-body" class="card"></div>
+      </div>` + disclaimer();
+
+    renderWStep(key, WIZ.step);
+  }
+
+  function persistWiz(key) {
+    const cur = Store.getCurrentPatient();
+    Store.saveDraft(key, cur ? cur.id : null, WIZ.step, WIZ);
+  }
+
+  function renderWStep(key, step) {
+    const m = MODULES[key];
+    const cur = Store.getCurrentPatient();
+    const body = $('#wstep-body');
+    WIZ.step = step;
+
+    if (step === 1) return renderStep1(key, body);
+    if (!cur) { body.innerHTML = `<div class="empty">请先在「选患者」步骤选择或新建患者，再继续后续评估。</div>`; return; }
+
+    if (step === 2) return renderStep2(key, body);
+    if (step === 3) return renderStep3(key, body);
+    if (step === 4) return renderStep4(key, body);
+    if (step === 5) return renderStep5(key, body);
+    if (step === 6) return renderStep6(key, body);
+  }
+
+  function renderStep1(key, body) {
+    const list = Store.getPatients();
+    const cur = Store.getCurrentPatient();
+    const cards = list.length ? list.map(p => `
+      <div class="patient-mini ${cur && cur.id === p.id ? 'sel' : ''}" data-action="wselect" data-id="${p.id}">
+        <b>${esc(p.name)}</b><span>${esc(p.age)}岁·${esc(p.gender)}</span><span>${esc(p.diagnosis) || ''}</span>
+      </div>`).join('') : '<div class="empty">暂无患者，请先新建。</div>';
+    body.innerHTML = `
+      <h3>① 选择患者</h3>
+      <div class="form-row">
+        <label>姓名<input id="w-name" placeholder="新建患者姓名"></label>
+        <label>年龄<input id="w-age" type="number" placeholder="年龄"></label>
+        <label>性别<select id="w-gender"><option value="">未填</option><option>男</option><option>女</option></select></label>
+      </div>
+      <label>临床诊断<textarea id="w-dx" rows="2" placeholder="诊断"></textarea></label>
+      <button class="btn btn-ghost" data-action="wnew">新建并选择该患者</button>
+      <h4>或选择已有患者</h4>
+      <div class="patient-mini-list">${cards}</div>
+      <button class="btn btn-primary" data-action="wconfirm" ${cur ? '' : 'disabled'}>确认患者，进入接诊筛查 →</button>`;
+
+    body.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      if (b.dataset.action === 'wselect') {
+        Store.setCurrentPatient(b.dataset.id);
+        toast('已选择患者'); renderModule(key);
+      } else if (b.dataset.action === 'wnew') {
+        const name = $('#w-name').value.trim(); if (!name) return toast('请填写姓名');
+        const p = Store.addPatient({ name, age: $('#w-age').value, gender: $('#w-gender').value, diagnosis: $('#w-dx').value.trim() });
+        Store.setCurrentPatient(p.id); toast('已新建并选择'); renderModule(key);
+      } else if (b.dataset.action === 'wconfirm') {
+        if (!Store.getCurrentPatientId()) return toast('请先选择患者');
+        renderWStep(key, 2);
+      }
+    });
+  }
+
+  function renderStep2(key, body) {
+    const cur = Store.getCurrentPatient();
+    const flags = RED_FLAGS.map(f => {
+      const ck = WIZ.step2.redflags.includes(f.key);
+      return `<label class="flag ${ck ? 'on' : ''}"><input type="checkbox" data-flag="${f.key}" ${ck ? 'checked' : ''}> ${esc(f.label)}</label>`;
+    }).join('');
+    body.innerHTML = `
+      <h3>② 接诊筛查 · 红旗征安全清单</h3>
+      <p class="hint-red">出现以下任何红旗征，应<b>暂缓治疗</b>，立即上报带教老师 / 医生。</p>
+      <div class="flags">${flags}</div>
+      <label>其他注意事项<textarea data-field="step2.note" rows="2" placeholder="如生命体征具体数值、医嘱等">${esc(WIZ.step2.note)}</textarea></label>
+      <button class="btn btn-primary" data-action="wstep-next" data-next="3">确认筛查，进入评估 →</button>`;
+    bindWizInputs(key, body);
+    body.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action="wstep-next"]'); if (!b) return;
+      const hasFlag = WIZ.step2.redflags.length > 0;
+      if (hasFlag) {
+        alertDialog({ title: '⚠️ 红旗征警示', message: '检测到红旗征（' + WIZ.step2.redflags.length + ' 项），请暂缓治疗并上报带教老师 / 医生！' });
+        return;
+      }
+      renderWStep(key, 3);
+    });
+    $$('input[data-flag]', body).forEach(c => c.addEventListener('change', () => {
+      const k = c.dataset.flag;
+      if (c.checked) { if (!WIZ.step2.redflags.includes(k)) WIZ.step2.redflags.push(k); }
+      else WIZ.step2.redflags = WIZ.step2.redflags.filter(x => x !== k);
+      persistWiz(key); renderStep2(key, body);
+    }));
+  }
+
+  function renderStep3(key, body) {
+    const m = MODULES[key];
+    // 模块自带评估项
+    const base = m.assessments.map(a => ({ a, added: false }));
+    // 自主添加的评定表（来自量表计算器中心）
+    const extra = (WIZ.step3.extraScales || []).map(k => {
+      const s = (window.SCALES || []).find(x => x.key === k);
+      return { a: { key: 'extra_' + k, label: (s ? s.name : k) + '（已添加）', scale: k }, added: true };
+    });
+    const all = base.concat(extra);
+    const items = all.map(it => {
+      const a = it.a;
+      const note = WIZ.step3.notes[a.key] || '';
+      let ctrl = '';
+      if (a.scale) {
+        ctrl = `<button class="btn btn-sm btn-primary" data-action="wscale" data-scale="${a.scale}">打开量表计算器</button>`;
+      } else if (a.type === 'rom') {
+        ctrl = renderRomTable(key, a.key);
+      } else {
+        ctrl = `<textarea data-note="${a.key}" rows="2" placeholder="${esc(a.placeholder || '记录观察结果')}">${esc(note)}</textarea>`;
+      }
+      const rm = it.added ? `<button class="btn btn-sm btn-danger" data-action="wrm-scale" data-key="${a.scale}">移除</button>` : '';
+      return `<div class="assess-row"><div class="assess-label">${esc(a.label)}</div><div class="assess-ctrl">${ctrl}${rm}</div></div>`;
+    }).join('');
+
+    // 添加评定表的选择行（数据源：量表计算器中心）
+    const used = new Set(m.assessments.filter(x => x.scale).map(x => x.scale).concat(WIZ.step3.extraScales || []));
+    const opts = (window.SCALES || [])
+      .filter(s => !used.has(s.key))
+      .map(s => `<option value="${s.key}">${esc(s.name)}（${esc(s.category || '')}）</option>`).join('');
+    const addRow = `<div class="assess-row add-row">
+      <div class="assess-label">＋ 自主添加量表评定表</div>
+      <div class="assess-ctrl add-ctrl">
+        <select id="extra-scale-select" class="sel-scale"><option value="">选择「量表计算器中心」的评定表…</option>${opts}</select>
+        <button class="btn btn-sm btn-primary" data-action="wadd-scale">添加</button>
+      </div></div>`;
+
+    body.innerHTML = `
+      <h3>③ 评估</h3>
+      <p class="hint">每项评估可打开量表计算器，结果会自动存入患者档案并回填 SOAP 的 O 部分。关节活动度请分左右直接填写度数（°）。</p>
+      <div class="assess-list">${items}${addRow}</div>`;
+    bindWizInputs(key, body);
+    bindRomInputs(key, body);
+    $$('[data-action="wscale"]', body).forEach(b => b.addEventListener('click', () => openScaleModal(b.dataset.scale, { patientId: Store.getCurrentPatientId() })));
+  }
+
+  function renderRomTable(key, aKey) {
+    const data = (WIZ.step3.rom && WIZ.step3.rom[aKey]) || {};
+    let curGroup = '';
+    const rows = ROM_JOINTS.map((j, i) => {
+      const d = data[i] || {};
+      let head = '';
+      if (j.g !== curGroup) { curGroup = j.g; head = `<tr class="rom-group"><td colspan="4">${esc(j.g)}</td></tr>`; }
+      return `${head}<tr>
+        <td class="rom-j">${esc(j.n)}</td>
+        <td class="rom-nr" title="成人正常活动度参考">${esc(j.nr)}</td>
+        <td><input class="rom-in" type="number" inputmode="decimal" min="-30" max="360" step="1" placeholder="°" data-rom="${aKey}|${i}|left" value="${esc(d.left || '')}"></td>
+        <td><input class="rom-in" type="number" inputmode="decimal" min="-30" max="360" step="1" placeholder="°" data-rom="${aKey}|${i}|right" value="${esc(d.right || '')}"></td>
+      </tr>`;
+    }).join('');
+    return `<div class="rom-wrap"><table class="rom-tbl"><thead><tr><th>关节 / 动作</th><th>正常 (°)</th><th>左 (°)</th><th>右 (°)</th></tr></thead><tbody>${rows}</tbody></table><p class="rom-tip">「正常」列为成人参考活动度，仅作对照提示，不代表个体目标。</p></div>`;
+  }
+
+  function bindRomInputs(key, root) {
+    $$('[data-rom]', root).forEach(el => el.addEventListener('input', () => {
+      const parts = el.dataset.rom.split('|');
+      const aKey = parts[0], idx = parts[1], side = parts[2];
+      WIZ.step3.rom = WIZ.step3.rom || {};
+      WIZ.step3.rom[aKey] = WIZ.step3.rom[aKey] || {};
+      WIZ.step3.rom[aKey][idx] = WIZ.step3.rom[aKey][idx] || {};
+      WIZ.step3.rom[aKey][idx][side] = el.value;
+      persistWiz(key);
+    }));
+  }
+
+  function renderStep4(key, body) {
+    const prim = PROBLEMS.primary.map(p => `<label class="prob"><input type="checkbox" data-prob="${esc(p)}" ${WIZ.step4.problems.includes(p) ? 'checked' : ''}> ${esc(p)}</label>`).join('');
+    const sec = PROBLEMS.secondary.map(p => `<label class="prob"><input type="checkbox" data-prob="${esc(p)}" ${WIZ.step4.problems.includes(p) ? 'checked' : ''}> ${esc(p)}</label>`).join('');
+    const shortT = SHORT_TEMPLATES.map(t => `<button class="tpl" data-tpl="short">${esc(t)}</button>`).join('');
+    const longT = LONG_TEMPLATES.map(t => `<button class="tpl" data-tpl="long">${esc(t)}</button>`).join('');
+    body.innerHTML = `
+      <h3>④ 分析目标（SMART 原则）</h3>
+      <h4>问题列表</h4>
+      <div class="prob-group"><b>主要问题</b><div class="prob-list">${prim}</div></div>
+      <div class="prob-group"><b>次要问题</b><div class="prob-list">${sec}</div></div>
+      <h4>康复目标</h4>
+      <label>短期目标（2-4 周）<textarea data-field="step4.shortTerm" rows="2" placeholder="可点击下方模板快速填入">${esc(WIZ.step4.shortTerm)}</textarea></label>
+      <div class="tpl-list">常用模板：${shortT}</div>
+      <label>长期目标（1-3 个月）<textarea data-field="step4.longTerm" rows="2" placeholder="可点击下方模板快速填入">${esc(WIZ.step4.longTerm)}</textarea></label>
+      <div class="tpl-list">常用模板：${longT}</div>
+      <div class="row gap">
+        <button class="btn btn-primary" data-action="wsave-goal">保存目标并进入计划治疗 →</button>
+        <button class="btn btn-ai" data-action="ai-goal-step4">🤖 AI 建议目标</button>
+      </div>`;
+    bindWizInputs(key, body);
+    $$('input[data-prob]', body).forEach(c => c.addEventListener('change', () => {
+      const v = c.dataset.prob;
+      if (c.checked) { if (!WIZ.step4.problems.includes(v)) WIZ.step4.problems.push(v); }
+      else WIZ.step4.problems = WIZ.step4.problems.filter(x => x !== v);
+      persistWiz(key);
+    }));
+    $$('.tpl', body).forEach(b => b.addEventListener('click', () => {
+      const f = b.dataset.tpl === 'short' ? 'step4.shortTerm' : 'step4.longTerm';
+      const ta = $(`[data-field="${f}"]`, body);
+      ta.value = (ta.value ? ta.value + '；' : '') + b.textContent;
+      WIZ.step4[b.dataset.tpl] = ta.value; persistWiz(key);
+    }));
+    body.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      if (b.dataset.action === 'wsave-goal') {
+        if (!WIZ.step4.problems.length && !WIZ.step4.shortTerm && !WIZ.step4.longTerm) return toast('请至少勾选问题或填写目标');
+        Store.addGoal(Store.getCurrentPatientId(), { problems: WIZ.step4.problems.slice(), shortTerm: WIZ.step4.shortTerm, longTerm: WIZ.step4.longTerm });
+        toast('目标已保存'); renderWStep(key, 5);
+      } else if (b.dataset.action === 'ai-goal-step4') {
+        const cur = Store.getCurrentPatient();
+        if (WIZ.step4.problems.length === 0) return toast('请先勾选主要/次要问题，AI 才能建议目标');
+        const g = window.AI.goalSuggestions(cur);
+        const st = $('#view').querySelector('[data-field="step4.shortTerm"]');
+        const lt = $('#view').querySelector('[data-field="step4.longTerm"]');
+        st.value = (st.value ? st.value + '\n' : '') + g.short.join('\n');
+        lt.value = (lt.value ? lt.value + '\n' : '') + g.long.join('\n');
+        WIZ.step4.shortTerm = st.value; WIZ.step4.longTerm = lt.value; persistWiz(key);
+        toast('AI 已建议目标，请审校修改');
+      }
+    });
+  }
+
+  function renderStep5(key, body) {
+    const m = MODULES[key];
+    const dx = (Store.getCurrentPatient().diagnosis || '').toLowerCase();
+    const recKeys = recommendTreatments(m, dx);
+    const techs = (window.TREATMENTS || []).filter(t => t.modules.includes(key));
+    const rows = techs.map(t => {
+      const st = WIZ.step5.techniques[t.key] || { checked: recKeys.includes(t.key), freq: '', duration: '' };
+      return `<div class="tech">
+        <div class="tech-head">
+          <label class="tech-chk"><input type="checkbox" data-tech="${t.key}" ${st.checked ? 'checked' : ''}> <b>${esc(t.name)}</b></label>
+          <button class="btn btn-sm btn-ghost" data-action="tech-toggle" data-key="${t.key}">详情</button>
+        </div>
+        <div class="tech-detail hidden" data-tech-detail="${t.key}">
+          <p><b>适应证：</b>${esc(t.indications)}</p>
+          <p><b>禁忌证：</b>${esc(t.contraindications)}</p>
+          <p><b>操作要点：</b>${esc(t.points)}</p>
+        </div>
+        <div class="tech-params ${st.checked ? '' : 'hidden'}" data-tech-params="${t.key}">
+          <input placeholder="频次 如 1 次/日" value="${esc(st.freq)}" data-tech-freq="${t.key}">
+          <input placeholder="单次时间 如 30 min" value="${esc(st.duration)}" data-tech-dur="${t.key}">
+        </div>
+      </div>`;
+    }).join('');
+    body.innerHTML = `
+      <h3>⑤ 计划治疗</h3>
+      <p class="hint">已根据诊断推荐治疗技术（可手动调整）。勾选技术并填写参数后将回填 SOAP 的 P 部分。</p>
+      <div class="tech-list">${rows}</div>
+      <div class="row gap">
+        <button class="btn btn-primary" data-action="wsave-plan">保存治疗计划并进入 SOAP →</button>
+        <button class="btn btn-ai" data-action="ai-plan-step5">🤖 AI 生成计划说明</button>
+      </div>`;
+    bindWizInputs(key, body);
+    $$('[data-action="tech-toggle"]', body).forEach(b => b.addEventListener('click', () => $(`[data-tech-detail="${b.dataset.key}"]`, body).classList.toggle('hidden')));
+    $$('input[data-tech]', body).forEach(c => c.addEventListener('change', () => {
+      const k = c.dataset.tech;
+      WIZ.step5.techniques[k] = WIZ.step5.techniques[k] || { freq: '', duration: '' };
+      WIZ.step5.techniques[k].checked = c.checked;
+      persistWiz(key);
+      const pr = $(`[data-tech-params="${k}"]`, body); if (pr) pr.classList.toggle('hidden', !c.checked);
+    }));
+    $$('input[data-tech-freq], input[data-tech-dur]', body).forEach(i => i.addEventListener('input', () => {
+      const k = i.dataset.techFreq || i.dataset.techDur;
+      WIZ.step5.techniques[k] = WIZ.step5.techniques[k] || { checked: true, freq: '', duration: '' };
+      if (i.dataset.techFreq) WIZ.step5.techniques[k].freq = i.value; else WIZ.step5.techniques[k].duration = i.value;
+      persistWiz(key);
+    }));
+    body.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      if (b.dataset.action === 'wsave-plan') {
+        const chosen = Object.entries(WIZ.step5.techniques).filter(([, v]) => v.checked).map(([k]) => {
+          const t = window.TREATMENT_MAP[k];
+          return { key: k, name: t ? t.name : k, freq: WIZ.step5.techniques[k].freq, duration: WIZ.step5.techniques[k].duration };
+        });
+        Store.savePlan(Store.getCurrentPatientId(), { techniques: chosen });
+        toast('治疗计划已保存'); renderWStep(key, 6);
+      } else if (b.dataset.action === 'ai-plan-step5') {
+        const cur = Store.getCurrentPatient();
+        if (!cur.plan || !cur.plan.techniques || !cur.plan.techniques.length) return toast('请先勾选治疗技术并保存计划');
+        const txt = window.AI.planNarrative(cur);
+        openTextModal('治疗计划说明（AI）', `<pre class="ai-pre">${esc(txt)}</pre>`, txt);
+      }
+    });
+  }
+
+  function renderStep6(key, body) {
+    const p = Store.getCurrentPatient();
+    // 自动汇总
+    const oAuto = buildO(p);
+    const aAuto = buildA(p);
+    const pAuto = buildP(p);
+    // 已有草稿先不覆盖：若用户已编辑过则保留
+    WIZ.step6.o = WIZ.step6.o || oAuto;
+    WIZ.step6.a = WIZ.step6.a || aAuto;
+    WIZ.step6.p = WIZ.step6.p || pAuto;
+    body.innerHTML = `
+      <h3>⑥ SOAP 记录</h3>
+      <div class="soap-grid">
+        <div class="soap-box"><div class="soap-lab s">S 主观</div><textarea data-field="step6.s" rows="4" placeholder="患者主诉、症状、既往功能（需手动输入）">${esc(WIZ.step6.s)}</textarea></div>
+        <div class="soap-box"><div class="soap-lab o">O 客观</div><textarea data-field="step6.o" rows="4" placeholder="自动回填量表结果">${esc(WIZ.step6.o)}</textarea></div>
+        <div class="soap-box"><div class="soap-lab a">A 评估分析</div><textarea data-field="step6.a" rows="4" placeholder="自动回填问题与目标">${esc(WIZ.step6.a)}</textarea></div>
+        <div class="soap-box"><div class="soap-lab p">P 治疗计划</div><textarea data-field="step6.p" rows="4" placeholder="自动回填治疗技术">${esc(WIZ.step6.p)}</textarea></div>
+      </div>
+      <div class="row gap">
+        <button class="btn btn-primary" data-action="wsave-soap">保存 SOAP 文档</button>
+        <button class="btn btn-ghost" data-action="wrefill">重新自动填充 O/A/P</button>
+        <button class="btn btn-ai" data-action="ai-soap-step6">🤖 AI 叙述草稿</button>
+      </div>`;
+    bindWizInputs(key, body);
+    body.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      if (b.dataset.action === 'wsave-soap') {
+        Store.addSoap(Store.getCurrentPatientId(), { s: WIZ.step6.s, o: WIZ.step6.o, a: WIZ.step6.a, p: WIZ.step6.p, moduleKey: key });
+        Store.clearDraft(key, Store.getCurrentPatientId());
+        toast('SOAP 已保存');
+        location.hash = '#/patients/' + Store.getCurrentPatientId();
+      } else if (b.dataset.action === 'wrefill') {
+        WIZ.step6.o = buildO(p); WIZ.step6.a = buildA(p); WIZ.step6.p = buildP(p); persistWiz(key); renderStep6(key, body);
+      } else if (b.dataset.action === 'ai-soap-step6') {
+        const sec = window.AI.soapSections(p, MODULES[key].name);
+        const bodyHtml = `<label class="ai-ta-lab">O 客观<textarea id="txt-o" rows="5">${esc(sec.o)}</textarea></label>
+          <label class="ai-ta-lab">A 评估分析<textarea id="txt-a" rows="5">${esc(sec.a)}</textarea></label>
+          <label class="ai-ta-lab">P 治疗计划<textarea id="txt-p" rows="5">${esc(sec.p)}</textarea></label>`;
+        openTextModal('SOAP 叙述草稿（AI）', bodyHtml, [sec.s, sec.o, sec.a, sec.p].join('\n\n'), { fill: true });
+      }
+    });
+  }
+
+  function romSummary() {
+    if (!WIZ || !WIZ.step3 || !WIZ.step3.rom) return '';
+    const parts = [];
+    Object.keys(WIZ.step3.rom).forEach(aKey => {
+      const jointData = WIZ.step3.rom[aKey];
+      const lines = ROM_JOINTS.map((j, i) => {
+        const d = jointData[i];
+        if (!d) return null;
+        const l = d.left ? ('L ' + d.left + '°') : '';
+        const r = d.right ? ('R ' + d.right + '°') : '';
+        const vals = [l, r].filter(Boolean).join(' / ');
+        return vals ? (j.n + ' ' + vals) : null;
+      }).filter(Boolean);
+      if (lines.length) parts.push('关节活动度：' + lines.join('；'));
+    });
+    return parts.join('\n');
+  }
+
+  function buildO(p) {
+    const rom = romSummary();
+    if (!p.evaluations.length && !rom) return '（暂无评估记录）';
+    let s = p.evaluations.map(ev => `· ${ev.scaleName}：得分 ${ev.scoreDisplay || ev.score}（${ev.level || ''}）— ${ev.interpretation || ''}`).join('\n');
+    if (rom) s += '\n\n' + rom;
+    return s;
+  }
+  function buildA(p) {
+    const g = p.goals[0];
+    let s = '';
+    if (g) {
+      s += '问题：' + (g.problems || []).join('、') + '\n';
+      s += '短期目标：' + (g.shortTerm || '—') + '\n';
+      s += '长期目标：' + (g.longTerm || '—');
+    } else s = '（暂无目标记录）';
+    return s;
+  }
+  function buildP(p) {
+    if (!p.plan || !p.plan.techniques.length) return '（暂无治疗计划）';
+    return p.plan.techniques.map(t => `· ${t.name}${t.freq ? '（' + t.freq : ''}${t.duration ? ' / ' + t.duration + '）' : ''}`).join('\n');
+  }
+
+  function recommendTreatments(m, dx) {
+    const rec = [];
+    if (dx.includes('瘫') || dx.includes('卒中') || dx.includes('脑梗')) { rec.push('prom', 'strength', 'balance', 'neurofac'); }
+    if (dx.includes('关节') || dx.includes('骨折') || dx.includes('术后')) rec.push('prom', 'maitland', 'stretch');
+    if (dx.includes('老年') || dx.includes('跌倒') || dx.includes('高龄')) rec.push('fallprev', 'balance', 'endurance');
+    if (dx.includes('吞咽') || dx.includes('呛')) rec.push('swallow');
+    if (dx.includes('言语') || dx.includes('构音') || dx.includes('失语')) rec.push('artic', 'voice', 'aphasia');
+    if (dx.includes('脑瘫') || dx.includes('发育') || dx.includes('儿')) rec.push('ndt', 'sensoryint');
+    if (dx.includes('认知') || dx.includes('痴呆')) rec.push('cognition');
+    if (dx.includes('adl') || dx.includes('自理')) rec.push('adl');
+    return rec;
+  }
+
+  // 通用：绑定向导表单输入自动保存
+  function bindWizInputs(key, root) {
+    $$('[data-field]', root).forEach(el => el.addEventListener('input', () => {
+      const f = el.dataset.field; // 形如 step4.shortTerm
+      const [step, field] = f.split('.');
+      WIZ[step][field] = el.value; persistWiz(key);
+    }));
+    $$('[data-note]', root).forEach(el => el.addEventListener('input', () => {
+      WIZ.step3.notes[el.dataset.note] = el.value; persistWiz(key);
+    }));
+  }
+
+  /* ============ 量表计算器（中心 + 弹窗） ============ */
+  function renderScales() {
+    const cats = ['全部'].concat(window.SCALE_CATEGORIES);
+    const catBtns = cats.map(c => `<button class="chip" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+    const list = window.SCALES.map(s => `
+      <div class="card scale-card" data-cat="${esc(s.category)}" data-name="${esc(s.name.toLowerCase())}">
+        <div class="sc-name">${esc(s.name)}</div>
+        <div class="sc-cat">${esc(s.category)}</div>
+        <div class="sc-desc">${esc(s.desc)}</div>
+        <button class="btn btn-sm btn-primary" data-action="open-scale" data-scale="${s.key}">打开计算</button>
+      </div>`).join('');
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>量表计算器中心</h1><p class="sub">${window.SCALES.length} 个量表 · 保存结果自动写入当前患者并回填 SOAP-O</p></div>
+        <div class="cur-bar">${patientBadge()}</div>
+        <input id="scale-search" class="search" placeholder="搜索量表名称…">
+        <div class="chips">${catBtns}</div>
+        <div class="grid-3" id="scale-list">${list}</div>
+      </div>` + disclaimer();
+
+    const filter = () => {
+      const q = ($('#scale-search').value || '').toLowerCase();
+      const cat = $('#scale-list').dataset.cat || '全部';
+      $$('.scale-card', $('#view')).forEach(c => {
+        const ok = (cat === '全部' || c.dataset.cat === cat) && (!q || c.dataset.name.includes(q));
+        c.classList.toggle('hidden', !ok);
+      });
+    };
+    $('#scale-search').addEventListener('input', filter);
+    $$('.chip', $('#view')).forEach(b => b.addEventListener('click', () => {
+      $$('.chip', $('#view')).forEach(x => x.classList.toggle('active', x === b));
+      $('#scale-list').dataset.cat = b.dataset.cat; filter();
+    }));
+    $$('[data-action="open-scale"]', $('#view')).forEach(b => b.addEventListener('click', () => openScaleModal(b.dataset.scale, { patientId: Store.getCurrentPatientId() })));
+  }
+
+  let SCALE_STATE = null;
+  function patientOptions(selectedId) {
+    const ps = Store.getPatients();
+    let html = `<option value="">— 未选择（仅暂存，不写入档案）—</option>`;
+    ps.forEach(p => {
+      const sel = p.id === selectedId ? 'selected' : '';
+      html += `<option value="${p.id}" ${sel}>${esc(p.name)}（${esc(p.age)}岁·${esc(p.gender)}）</option>`;
+    });
+    return html;
+  }
+  function openScaleModal(key, ctx) {
+    const s = window.SCALE_MAP[key];
+    if (!s) return;
+    // 读取草稿（中途退出保存）
+    const draftKey = 'rc_scale_draft_' + key;
+    let sel = {};
+    try { sel = JSON.parse(localStorage.getItem(draftKey)) || {}; } catch (e) { sel = {}; }
+    SCALE_STATE = { scale: s, ctx: ctx || {}, sel };
+
+    const items = s.items.map((it, i) => {
+      const opts = it.options.map(o => {
+        const checked = sel[i] === o.label ? 'checked' : '';
+        return `<label class="opt"><input type="radio" name="si_${i}" value="${esc(o.label)}" data-i="${i}" data-score="${o.score}" ${checked}> ${esc(o.label)}</label>`;
+      }).join('');
+      return `<div class="scale-item"><div class="si-q">${esc(it.q)}</div><div class="si-opts">${opts}</div></div>`;
+    }).join('');
+
+    $('#modal-root').innerHTML = `
+      <div class="modal-mask">
+        <div class="modal" data-stop="1">
+          <div class="modal-head"><h3>${esc(s.name)}</h3><button class="x" data-action="scale-close">×</button></div>
+          <p class="modal-sub">${esc(s.desc)} · 分类：${esc(s.category)}</p>
+          <div class="scale-bind">绑定患者：<select id="scale-patient">${patientOptions(ctx.patientId)}</select></div>
+          <div class="modal-body">${items}</div>
+          <div class="scale-result" id="scale-result"></div>
+          <div class="modal-foot">
+            <button class="btn btn-primary" data-action="scale-save">保存结果</button>
+            <button class="btn btn-ghost" data-action="scale-close">关闭（自动存草稿）</button>
+          </div>
+        </div>
+      </div>`;
+    $('#modal-root').classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    const compute = () => {
+      const map = {};
+      let total = 0; let allFilled = true;
+      s.items.forEach((it, i) => {
+        const chk = $(`input[name="si_${i}"]:checked`, $('#modal-root'));
+        if (!chk) { allFilled = false; return; }
+        const o = it.options.find(x => x.label === chk.value);
+        map[it.q] = { label: o.label, score: o.score, info: o.info || '' };
+        total += o.score;
+      });
+      const r = $('#scale-result');
+      if (!allFilled) { r.innerHTML = `<p class="hint-yellow">请完成全部条目后自动计算。</p>`; return null; }
+      // 必须在 allFilled 之后才调用 interpret：未选全时 map 不完整，interpret 访问 map[题].label 会报错导致整个点击处理函数崩溃（弹窗卡死）
+      const res = s.type === 'sum'
+        ? { score: total, ...s.grade(total) }
+        : s.interpret ? s.interpret(map) : { level: '已记录', text: Object.values(map).map(v => v.label).join('；') };
+      r.innerHTML = `<div class="res-box"><div class="res-score">${s.type === 'sum' ? '总分 ' + res.score : (s.unit ? '结果 ' : '') + res.level}</div>
+        <div class="res-level">${esc(res.level)}</div><div class="res-text">${esc(res.text)}</div></div>`;
+      return Object.assign({ total }, res, { map });
+    };
+
+    $$('input[type="radio"]', $('#modal-root')).forEach(r => r.addEventListener('change', () => {
+      const i = r.dataset.i; SCALE_STATE.sel[i] = r.value;
+      localStorage.setItem(draftKey, JSON.stringify(SCALE_STATE.sel));
+      compute();
+    }));
+    try { compute(); } catch (e) { console.error('量表初算失败', e); }
+
+    $('#modal-root').onclick = (e) => {
+      if (e.target.closest('[data-action="scale-save"]')) {
+        const res = compute(); if (!res) return toast('请先完成全部条目');
+        const sel = $('#scale-patient');
+        const pid = (sel && sel.value) || SCALE_STATE.ctx.patientId || Store.getCurrentPatientId();
+        if (!pid) { toast('请先在上方「绑定患者」选择患者，结果才会写入档案'); return; }
+        const detail = Object.entries(res.map).map(([q, v]) => ({ q, label: v.label, score: v.score }));
+        Store.addEvaluation(pid, {
+          scaleKey: s.key, scaleName: s.name,
+          score: res.score, scoreDisplay: s.type === 'sum' ? res.score : res.level,
+          level: res.level, interpretation: res.text, detail
+        });
+        Store.setCurrentPatient(pid);
+        localStorage.removeItem(draftKey);
+        closeScaleModal();
+        toast('已保存至患者档案，并回填 SOAP-O');
+        return;
+      }
+      if (e.target.classList.contains('modal-mask')) { closeScaleModal(); return; }
+      if (e.target.closest('[data-action="scale-close"]')) { closeScaleModal(); return; }
+    };
+  }
+  function closeScaleModal() { $('#modal-root').classList.remove('show'); $('#modal-root').innerHTML = ''; $('#modal-root').onclick = null; document.body.style.overflow = ''; }
+
+  /* ============ 通用文本模态（AI 生成结果展示 / 复制） ============ */
+  function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); return; }
+    } catch (e) { /* fall through */ }
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+  }
+  function openTextModal(title, bodyHtml, copyText, opts) {
+    opts = opts || {};
+    const root = $('#modal-root');
+    const fillBtn = opts.fill ? `<button class="btn btn-primary" data-action="txt-fill">填入 SOAP 各栏</button>` : '';
+    root.innerHTML = `
+      <div class="modal-mask">
+        <div class="modal modal-lg" data-stop="1">
+          <div class="modal-head"><h3>${esc(title)}</h3><button class="x" data-action="txt-close">×</button></div>
+          <div class="modal-body ai-body">${bodyHtml}</div>
+          <div class="modal-foot">
+            ${fillBtn}
+            <button class="btn btn-primary" data-action="txt-copy">复制全文</button>
+            <button class="btn btn-ghost" data-action="txt-close">关闭</button>
+          </div>
+        </div>
+      </div>`;
+    root.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    root.onclick = (e) => {
+      if (e.target.classList.contains('modal-mask')) return closeTextModal();
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      if (b.dataset.action === 'txt-close') return closeTextModal();
+      if (b.dataset.action === 'txt-copy') { copyToClipboard(copyText); toast('已复制到剪贴板'); }
+      if (b.dataset.action === 'txt-fill') {
+        if (!WIZ) { toast('请先进入相应模块并选择患者，再使用「填入各栏」'); closeTextModal(); return; }
+        const p = Store.getCurrentPatient();
+        if (!p) { toast('请先在模块「选患者」步骤选择患者'); closeTextModal(); return; }
+        WIZ.step6.o = $('#txt-o').value; WIZ.step6.a = $('#txt-a').value; WIZ.step6.p = $('#txt-p').value; persistWiz('__ai__');
+        closeTextModal(); toast('已填充到 SOAP 的 O / A / P，可进入「SOAP 记录」步骤查看');
+      }
+    };
+  }
+  function closeTextModal() { const r = $('#modal-root'); r.classList.remove('show'); r.innerHTML = ''; r.onclick = null; document.body.style.overflow = ''; }
+
+  /* ============ 应用内确认 / 提示弹窗（替代原生 confirm/alert，移动端 / WebView 不会被拦截） ============ */
+  function closeConfirm() { const r = $('#modal-root'); r.classList.remove('show'); r.innerHTML = ''; r.onclick = null; document.body.style.overflow = ''; }
+  function confirmDialog(opts) {
+    opts = opts || {};
+    const root = $('#modal-root');
+    const danger = opts.danger !== false;
+    root.innerHTML = `
+      <div class="modal-mask">
+        <div class="modal modal-sm" data-stop="1">
+          <div class="modal-head"><h3>${esc(opts.title || '请确认')}</h3></div>
+          <div class="modal-body"><p class="cf-msg">${esc(opts.message || '')}</p></div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" data-action="cf-no">${esc(opts.cancelText || '取消')}</button>
+            <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" data-action="cf-yes">${esc(opts.confirmText || '确定')}</button>
+          </div>
+        </div>
+      </div>`;
+    root.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    root.onclick = (e) => {
+      if (e.target.classList.contains('modal-mask')) { if (opts.dismiss !== false) closeConfirm(); return; }
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      if (b.dataset.action === 'cf-no') return closeConfirm();
+      if (b.dataset.action === 'cf-yes') { closeConfirm(); if (typeof opts.onConfirm === 'function') opts.onConfirm(); }
+    };
+  }
+  function alertDialog(opts) {
+    opts = opts || {};
+    confirmDialog({ title: opts.title, message: opts.message, confirmText: opts.confirmText || '我知道了', cancelText: '', onConfirm: opts.onConfirm });
+    const noBtn = $('#modal-root [data-action="cf-no"]'); if (noBtn) noBtn.style.display = 'none';
+  }
+
+  /* ============ 量表知识库 ============ */
+  function renderScaleKnowledge() {
+    const cards = window.SCALES.map(s => `
+      <div class="card kb-card">
+        <div class="kb-name">${esc(s.name)} <span class="kb-cat">${esc(s.category)}</span></div>
+        <div class="kb-desc">${esc(s.desc)}</div>
+        <details><summary>临床意义与解读</summary>
+          <p>类型：${s.type === 'sum' ? '求和评分' : '等级评定'}${s.unit ? ' · 单位：' + s.unit : ''}</p>
+          <p>结果分级：点击「打开计算」在量表中完成评定后自动给出解读；常见阈值见各量表说明。</p>
+        </details>
+      </div>`).join('');
+    $('#view').innerHTML = `<div class="page"><div class="page-head"><h1>量表与评定知识库</h1><p class="sub">${window.SCALES.length} 个量表介绍与临床意义</p></div>
+      <div class="grid-2">${cards}</div></div>` + disclaimer();
+  }
+
+  /* ============ 治疗知识库 ============ */
+  function renderTreatmentKnowledge() {
+    const cards = (window.TREATMENTS || []).map(t => `
+      <div class="card kb-card">
+        <div class="kb-name">${esc(t.name)}</div>
+        <p><b>适应证：</b>${esc(t.indications)}</p>
+        <p><b>禁忌证：</b>${esc(t.contraindications)}</p>
+        <p><b>操作要点：</b>${esc(t.points)}</p>
+        <div class="kb-tags">${t.modules.map(m => `<span class="kb-cat">${MODULES[m] ? MODULES[m].name : m}</span>`).join('')}</div>
+      </div>`).join('');
+    $('#view').innerHTML = `<div class="page"><div class="page-head"><h1>临床治疗知识库</h1><p class="sub">治疗技术适应证 / 禁忌证 / 操作要点</p></div>
+      <div class="grid-2">${cards}</div></div>` + disclaimer();
+  }
+
+  /* ============ 测试题库 ============ */
+  function renderQuiz() {
+    const filter = 'all';
+    const list = window.QUESTIONS;
+    const wrap = list.map((q, idx) => `
+      <div class="card quiz-card" data-qid="${q.id}">
+        <div class="quiz-meta"><span class="q-type ${q.type}">${q.type === 'case' ? '案例分析' : '单元测试'}</span><span class="q-mod">${esc(q.module || '')}</span></div>
+        <div class="quiz-stem">${idx + 1}. ${esc(q.stem)}</div>
+        <div class="quiz-opts">${q.options.map((o, i) => `<label class="q-opt"><input type="radio" name="q_${q.id}" value="${i}"> ${esc(o)}</label>`).join('')}</div>
+        <div class="quiz-fb hidden" data-fb="${q.id}"></div>
+      </div>`).join('');
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>测试题库</h1><p class="sub">单元测试 + 案例分析，答错自动收入错题本</p></div>
+        <div class="row gap">
+          <button class="btn btn-primary" data-action="quiz-submit">提交并查看解析</button>
+          <a class="btn btn-ghost" href="#/learn">去错题本 →</a>
+        </div>
+        <div id="quiz-list">${wrap}</div>
+      </div>` + disclaimer();
+
+    $('#view .page').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action="quiz-submit"]'); if (!b) return;
+      let correct = 0;
+      window.QUESTIONS.forEach(q => {
+        const chk = $(`input[name="q_${q.id}"]:checked`);
+        const fb = $(`[data-fb="${q.id}"]`);
+        if (!chk) { fb.className = 'quiz-fb'; fb.innerHTML = `<span class="wrong">未作答</span> 正确答案：${q.options[q.answer]}<br>${esc(q.explain)}`; fb.classList.remove('hidden'); Store.addWrong(q.id); return; }
+        if (parseInt(chk.value, 10) === q.answer) { correct++; fb.className = 'quiz-fb'; fb.innerHTML = `<span class="right">回答正确 ✓</span><br>${esc(q.explain)}`; }
+        else { fb.className = 'quiz-fb'; fb.innerHTML = `<span class="wrong">回答错误</span> 正确答案：${q.options[q.answer]}<br>${esc(q.explain)}`; Store.addWrong(q.id); }
+        fb.classList.remove('hidden');
+      });
+      const prog = Store.getQuizProgress(); prog.done = window.QUESTIONS.length; prog.correct = correct; Store.saveQuizProgress(prog);
+      toast(`本次答对 ${correct} / ${window.QUESTIONS.length}`);
+    });
+  }
+
+  /* ============ 学习中心 ============ */
+  function renderLearn() {
+    const wrongIds = Store.getWrong();
+    const wrongQs = window.QUESTIONS.filter(q => wrongIds.includes(q.id));
+    const prog = Store.getQuizProgress();
+    const notes = Store.getNotes();
+    const wrongCards = wrongQs.length ? wrongQs.map(q => `
+      <div class="card"><div class="quiz-stem">${esc(q.stem)}</div>
+      <p class="hint-yellow">正确答案：${esc(q.options[q.answer])}</p>
+      <p>${esc(q.explain)}</p>
+      <button class="btn btn-sm btn-ghost" data-action="remove-wrong" data-id="${q.id}">从错题本移除</button></div>`).join('')
+      : '<div class="empty">错题本为空，继续练习吧！</div>';
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>我的学习中心</h1><p class="sub">错题本 · 学习进度 · 笔记</p></div>
+        <div class="card"><h3>学习进度</h3>
+          <p>已完成答题：${prog.done} 题 · 累计答对：${prog.correct} 题</p>
+          <p>错题本数量：<b>${wrongQs.length}</b></p></div>
+        <h2 class="sec-title">错题本（${wrongQs.length}）</h2>
+        <div class="grid-2">${wrongCards}</div>
+        <h2 class="sec-title">学习笔记</h2>
+        <div class="card"><textarea id="learn-notes" rows="6" placeholder="记录你的学习心得…">${esc(notes)}</textarea>
+        <button class="btn btn-primary" data-action="save-notes">保存笔记</button></div>
+      </div>` + disclaimer();
+    $('#view .page').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      if (b.dataset.action === 'save-notes') { Store.saveNotes($('#learn-notes').value); toast('笔记已保存'); }
+      if (b.dataset.action === 'remove-wrong') { Store.removeWrong(b.dataset.id); renderLearn(); }
+    });
+  }
+
+  /* ============ 使用说明书 ============ */
+  function renderManual() {
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>使用说明书</h1><p class="sub">三步快速上手 + 核心功能导航</p></div>
+        <div class="card">
+          <h3>三步快速上手</h3>
+          <ol class="steps">
+            <li><b>创建患者档案</b>：左侧「我的患者」→ 填写姓名、年龄、性别、诊断 → 保存。</li>
+            <li><b>完成六步工作流</b>：进入 PT / OT / ST / 儿康 / 老年康复 → 先「选患者」→ 依次完成接诊筛查、评估、分析目标、计划治疗、SOAP 记录。</li>
+            <li><b>使用量表计算器评估</b>：在「量表计算器中心」或模块评估步骤点击「打开量表计算器」，逐项勾选自动算分并写入患者档案、回填 SOAP-O。</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>核心功能导航</h3>
+          <ul class="nav-help">
+            <li>🏠 <b>首页</b>：专业板块与资料拓展入口</li>
+            <li>👥 <b>我的患者</b>：档案管理、评估/目标/SOAP 列表</li>
+            <li>📝 <b>快速工作流</b>：病历文本关键词匹配风险因素</li>
+            <li>🟢🔵🟣🟠 <b>五大模块</b>：六步向导，强绑定患者</li>
+            <li>📋 <b>量表计算器中心</b>：20+ 量表搜索与计算</li>
+            <li>🤖 <b>AI 智能助手</b>：生成目标/SOAP/报告/教育材料 + 知识问答</li>
+            <li>📖🔧 <b>知识库</b>：量表与治疗技术资料</li>
+            <li>📑 <b>测试题库</b>：单元+案例，自动收集错题</li>
+            <li>📚 <b>我的学习中心</b>：错题本 / 进度 / 笔记</li>
+          </ul>
+        </div>
+        <div class="card hint-red">
+          <b>免责声明：</b>本工具仅供康复专业学生学习思维训练，不构成医疗建议，禁止录入真实患者隐私信息。
+        </div>
+      </div>` + disclaimer();
+  }
+
+  /* ============ AI 智能助手 ============ */
+  function renderAI() {
+    const p = Store.getCurrentPatient();
+    const hasP = !!p;
+    const genCard = (title, desc, action, btn) => `
+      <div class="card ai-card">
+        <div class="ai-card-t">${esc(title)}</div>
+        <div class="ai-card-d">${esc(desc)}</div>
+        <button class="btn btn-sm btn-ai" data-action="${action}" ${hasP ? '' : 'disabled'}>${esc(btn)}</button>
+      </div>`;
+    $('#view').innerHTML = `
+      <div class="page">
+        <div class="page-head"><h1>🤖 AI 智能助手</h1>
+          <p class="sub">本地 AI 辅助引擎 · 离线运行 · 理念：AI 拟定初稿，治疗师审校修订</p></div>
+        <div class="cur-bar">${patientBadge()}</div>
+        ${hasP ? '' : '<p class="hint-yellow">提示：先在「我的患者」或模块「选患者」步骤选择患者，生成类功能方可使用；知识问答无需患者。</p>'}
+        <h2 class="sec-title">文档生成（基于当前患者档案）</h2>
+        <div class="grid-2">
+          ${genCard('康复目标建议', '依据已勾选问题与评估结果，建议符合 SMART 原则的短期/长期目标。', 'ai-goal', '🤖 生成目标建议')}
+          ${genCard('SOAP 叙述草稿', '将评估/目标/计划整合为段落式 SOAP 初稿，可一键填入各栏。', 'ai-soap', '🤖 生成 SOAP 草稿')}
+          ${genCard('康复评估报告摘要', '汇总全部评估、目标与治疗计划，生成连贯的评估报告。', 'ai-report', '🤖 生成评估报告')}
+          ${genCard('治疗计划说明', '结合已选技术与治疗库，生成带操作要点/适应证的计划说明。', 'ai-plan', '🤖 生成计划说明')}
+          ${genCard('患者教育材料', '生成通俗版居家康复健康教育单（注意事项/危险信号）。', 'ai-edu', '🤖 生成教育材料')}
+        </div>
+        <div class="card" id="ai-goal-box" style="display:none">
+          <div class="ai-card-t">目标建议预览（可编辑后复制）</div>
+          <textarea id="ai-goal-out" rows="6" class="ai-out"></textarea>
+          <div class="row gap">
+            <button class="btn btn-sm btn-primary" data-action="ai-goal-copy">复制</button>
+            <button class="btn btn-sm btn-ghost" data-action="ai-goal-hide">收起</button>
+          </div>
+        </div>
+        <h2 class="sec-title">康复知识问答</h2>
+        <div class="card">
+          <p class="hint">输入量表 / 治疗技术 / 知识点关键词，AI 在本地知识库中检索最相关条目（无需联网）。</p>
+          <div class="row gap">
+            <input id="ai-q" class="search" placeholder="如：Berg 平衡、关节松动、洼田饮水…">
+            <button class="btn btn-primary" data-action="ai-ask">检索</button>
+          </div>
+          <div id="ai-res" class="ai-res"></div>
+        </div>
+        <div class="card hint-red">本助手为规则引擎生成的辅助初稿，所有内容须经治疗师/带教老师审校，不构成医疗建议。</div>
+      </div>` + disclaimer();
+
+    $('#view .page').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-action]'); if (!b) return;
+      const cur = Store.getCurrentPatient();
+      switch (b.dataset.action) {
+        case 'ai-goal': {
+          const g = window.AI.goalSuggestions(cur);
+          const txt = '短期目标：\n· ' + g.short.join('\n· ') + '\n\n长期目标：\n· ' + g.long.join('\n· ');
+          $('#ai-goal-box').style.display = 'block';
+          $('#ai-goal-out').value = txt;
+          if ($('#ai-goal-box').scrollIntoView) $('#ai-goal-box').scrollIntoView({ behavior: 'smooth' });
+          break;
+        }
+        case 'ai-goal-copy': copyToClipboard($('#ai-goal-out').value); toast('已复制'); break;
+        case 'ai-goal-hide': $('#ai-goal-box').style.display = 'none'; break;
+        case 'ai-soap': {
+          const sec = window.AI.soapSections(cur);
+          const body = `<label class="ai-ta-lab">O 客观<textarea id="txt-o" rows="5">${esc(sec.o)}</textarea></label>
+            <label class="ai-ta-lab">A 评估分析<textarea id="txt-a" rows="5">${esc(sec.a)}</textarea></label>
+            <label class="ai-ta-lab">P 治疗计划<textarea id="txt-p" rows="5">${esc(sec.p)}</textarea></label>`;
+          openTextModal('SOAP 叙述草稿', body, [sec.s, sec.o, sec.a, sec.p].join('\n\n'));
+          break;
+        }
+        case 'ai-report': openTextModal('康复评估报告摘要', `<pre class="ai-pre">${esc(window.AI.reportSummary(cur))}</pre>`, window.AI.reportSummary(cur)); break;
+        case 'ai-plan': openTextModal('治疗计划说明', `<pre class="ai-pre">${esc(window.AI.planNarrative(cur))}</pre>`, window.AI.planNarrative(cur)); break;
+        case 'ai-edu': openTextModal('患者教育材料', `<pre class="ai-pre">${esc(window.AI.educationMaterial(cur))}</pre>`, window.AI.educationMaterial(cur)); break;
+        case 'ai-ask': {
+          const q = ($('#ai-q').value || '').trim();
+          if (!q) return toast('请输入检索内容');
+          const r = window.AI.ask(q);
+          $('#ai-res').innerHTML = r.length ? r.map(x => `
+            <div class="ai-res-item"><span class="ai-tag">${esc(x.tag)}</span><b>${esc(x.title)}</b><p>${esc(x.body)}</p></div>`).join('')
+            : '<div class="empty">未检索到相关条目，换个关键词试试。</div>';
+          break;
+        }
+      }
+    });
+    const qInput = $('#ai-q');
+    if (qInput) qInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#view .page').querySelector('[data-action="ai-ask"]').click(); } });
+  }
+
+  /* ============ 免责声明 ============ */
+  function disclaimer() {
+    return `<div class="disclaimer">⚠️ 免责声明：本工具仅供康复专业学生学习思维训练，不构成医疗建议，禁止录入真实患者隐私信息。</div>`;
+  }
+
+  /* ============ 全局点击：导航 / 侧边栏 ============ */
+  document.addEventListener('click', (e) => {
+    const nav = e.target.closest('[data-action="nav"]');
+    if (nav) return; // 交给 hashchange
+    if (e.target.closest('[data-action="toggle-sidebar"]')) { openSidebarMobile(); }
+    if (e.target.closest('#sidebar-mask')) { closeSidebarMobile(); }
+    // 模块步骤切换（事件委托补充，覆盖重渲染场景）
+    const ws = e.target.closest('[data-action="wstep"]');
+    if (ws) {
+      const key = (location.hash.replace(/^#\/?/, '').split('/')[1]) || 'pt';
+      if (ws.classList.contains('disabled')) { toast('请先在「选患者」步骤选择患者'); return; }
+      renderWStep(key, parseInt(ws.dataset.step, 10));
+      $$('.wstep', $('#view')).forEach(x => x.classList.toggle('active', x === ws));
+    }
+    // 自主添加 / 移除量表评定表（事件委托，避免重渲染叠加监听）
+    const adder = e.target.closest('[data-action="wadd-scale"]');
+    if (adder) {
+      const key = (location.hash.replace(/^#\/?/, '').split('/')[1]) || 'pt';
+      const sel = $('#extra-scale-select');
+      const k = sel ? sel.value : '';
+      if (!k) return toast('请先选择要添加的评定表');
+      WIZ.step3.extraScales = WIZ.step3.extraScales || [];
+      if (WIZ.step3.extraScales.includes(k)) return toast('该评定表已添加');
+      WIZ.step3.extraScales.push(k); persistWiz(key); renderStep3(key, $('#wstep-body'));
+    }
+    const rmer = e.target.closest('[data-action="wrm-scale"]');
+    if (rmer) {
+      const key = (location.hash.replace(/^#\/?/, '').split('/')[1]) || 'pt';
+      const k = rmer.dataset.key;
+      WIZ.step3.extraScales = (WIZ.step3.extraScales || []).filter(x => x !== k);
+      persistWiz(key); renderStep3(key, $('#wstep-body'));
+    }
+  });
+
+  window.addEventListener('hashchange', () => { renderSidebar(); router(); });
+
+  /* ============ 开屏（星空夜景） ============ */
+  const ENCOURAGE = [
+    '今天也要美美地扛腿，稳稳地进步。',
+    '你扛的不是腿，是别人重新站起来的希望。',
+    '慢一点也没关系，方向对了就不怕远。',
+    '每一次屈膝伸膝，都在帮患者离独立更近一步。',
+    '你今天流的汗，是患者明天走的路。',
+    '别小看基础手法，扎实才是真本事。',
+    '疲惫的时候记得，你已经在做很有意义的事了。',
+    '把今天的患者，当成明天的老师。',
+    '进步是累积的，你也在和患者一起变强。',
+    '深呼吸，稳住手，你可以的。',
+    '康复没有奇迹，只有你日复一日的坚持。',
+    '温柔又有力量，是你最好的治疗处方。',
+    '今天也请对自己和患者都多一分耐心。',
+    '你已经比昨天的自己更专业了。',
+    '把平凡的动作做对，就是不平凡的康复。',
+    '夜空再黑也有星星，训练再难也有你。',
+    '手要稳，心要暖，今天的你一样可靠。',
+    '不是所有的好转都肉眼可见，但坚持都有回响。'
+  ];
+  function showSplash() {
+    const sp = $('#splash'); if (!sp) return;
+    const now = new Date();
+    const week = ['日', '一', '二', '三', '四', '五', '六'][now.getDay()];
+    const dateEl = $('#splash-date');
+    if (dateEl) dateEl.textContent = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日 · 星期${week}`;
+    // 每日一句：按年内第几天取，确保当天一致、隔天更新
+    const start = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now - start) / 86400000);
+    const encEl = $('#splash-encourage');
+    if (encEl) encEl.textContent = ENCOURAGE[dayOfYear % ENCOURAGE.length];
+    // 生成星空
+    const box = $('#splash-stars');
+    if (box) {
+      let html = '';
+      const n = 92;
+      for (let i = 0; i < n; i++) {
+        const x = (Math.random() * 100).toFixed(2);
+        const y = (Math.random() * 100).toFixed(2);
+        const s = (Math.random() * 1.8 + 1).toFixed(2);
+        const d = (Math.random() * 3).toFixed(2);
+        html += `<span class="splash-star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;animation-delay:${d}s"></span>`;
+      }
+      box.innerHTML = html;
+    }
+    const enter = $('#splash-enter');
+    if (enter && !enter.dataset.bound) {
+      enter.dataset.bound = '1';
+      enter.addEventListener('click', () => sp.classList.add('splash-hidden'));
+    }
+  }
+
+  let booted = false;
+  function boot() {
+    if (booted) return; booted = true;
+    renderSidebar();
+    router();
+    showSplash();
+    const hb = $('#hamburger'); if (hb) hb.addEventListener('click', openSidebarMobile);
+    const mask = $('#sidebar-mask'); if (mask) mask.addEventListener('click', closeSidebarMobile);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+
+</script>
+</body>
+</html>
