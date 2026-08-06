@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>康复工作台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (window.tailwind) {
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 900: '#14532d' }
+            }
+          }
+        }
+      };
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand">🩺 康复工作台</div>
+      <nav id="sidebar-nav" class="nav"></nav>
+    </aside>
+    <div id="sidebar-mask" class="sidebar-mask"></div>
+
+    <main class="main">
+      <div class="topbar">
+        <button id="hamburger" class="hamburger" aria-label="菜单">☰</button>
+        <span class="top-title">康复工作台</span>
+      </div>
+      <div id="view" class="view"></div>
+    </main>
+  </div>
+  <div id="toast-root" class="toast-root"></div>
+  <div id="modal-root" class="modal-root"></div>
+
+  <!-- 开屏：星空夜景 -->
+  <div id="splash" class="splash">
+    <div class="splash-sky">
+      <div class="splash-stars" id="splash-stars"></div>
+      <div class="splash-moon"></div>
+      <div class="splash-shooting" id="splash-shooting"></div>
+    </div>
+    <div class="splash-content">
+      <div class="splash-date" id="splash-date"></div>
+      <h1 class="splash-greet" id="splash-greet">嗨，扛腿战士</h1>
+      <p class="splash-encourage" id="splash-encourage"></p>
+      <button class="splash-enter" id="splash-enter" type="button">进入工作台 →</button>
+      <div class="splash-foot">本地数据存储 · 安全私密</div>
+    </div>
+  </div>
+
+  <script src="data/scales.js"></script>
+  <script src="data/treatments.js"></script>
+  <script src="data/questions.js"></script>
+  <script src="store.js"></script>
+  <script src="data/ai.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
